@@ -71,6 +71,41 @@
         "category": "Cozy MD"
       },
       {
+        "command": "cozyMd.toggleBold",
+        "title": "Toggle Bold",
+        "category": "Cozy MD"
+      },
+      {
+        "command": "cozyMd.toggleItalic",
+        "title": "Toggle Italic",
+        "category": "Cozy MD"
+      },
+      {
+        "command": "cozyMd.toggleCode",
+        "title": "Toggle Inline Code",
+        "category": "Cozy MD"
+      },
+      {
+        "command": "cozyMd.cycleHeading",
+        "title": "Cycle Heading Level",
+        "category": "Cozy MD"
+      },
+      {
+        "command": "cozyMd.insertLink",
+        "title": "Insert Link",
+        "category": "Cozy MD"
+      },
+      {
+        "command": "cozyMd.insertHorizontalRule",
+        "title": "Insert Horizontal Rule",
+        "category": "Cozy MD"
+      },
+      {
+        "command": "cozyMd.toggleBlockquote",
+        "title": "Toggle Blockquote",
+        "category": "Cozy MD"
+      },
+      {
         "command": "cozyMd.insertBlock",
         "title": "Insert Block",
         "category": "Cozy MD"
@@ -302,6 +337,36 @@
       }
     },
     "keybindings": [
+      {
+        "command": "cozyMd.toggleBold",
+        "key": "ctrl+b",
+        "mac": "cmd+b",
+        "when": "resourceLangId == markdown"
+      },
+      {
+        "command": "cozyMd.toggleItalic",
+        "key": "ctrl+i",
+        "mac": "cmd+i",
+        "when": "resourceLangId == markdown"
+      },
+      {
+        "command": "cozyMd.toggleCode",
+        "key": "ctrl+`",
+        "mac": "cmd+`",
+        "when": "resourceLangId == markdown"
+      },
+      {
+        "command": "cozyMd.cycleHeading",
+        "key": "ctrl+shift+h",
+        "mac": "cmd+shift+h",
+        "when": "resourceLangId == markdown"
+      },
+      {
+        "command": "cozyMd.insertLink",
+        "key": "ctrl+k",
+        "mac": "cmd+k",
+        "when": "resourceLangId == markdown"
+      },
       {
         "command": "cozyMd.togglePreview",
         "key": "ctrl+shift+m",

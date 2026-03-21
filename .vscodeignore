@@ -7,3 +7,4 @@ tsconfig.json
 esbuild.js
 **/*.map
 .vscode-test/**
+test-fixtures/**

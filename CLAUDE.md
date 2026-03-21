@@ -130,7 +130,7 @@ src/
 ## Testing
 - `npm test` runs parser unit tests via mocha (TDD interface, `suite`/`test`)
   - Scoped to `src/test/suite/parsers/**/*.test.ts` (no vscode dependency)
-  - Currently: 5 passing, 11 failing (parsers are stubs awaiting Phase 1)
+  - Currently: 16 passing, 0 failing
 - `npm run test:integration` runs VS Code integration tests via Extension
   Development Host (`src/test/suite/extension.test.ts`)
 - Unit tests target: CriticMarkup parser, table parser/serializer,
@@ -148,28 +148,40 @@ The `skills/` directory contains Claude Code skills for this project:
   on new skills.
 
 ## Current State
-- Extension activates on markdown files but has no user-facing behavior yet
-- All source modules (commands, decorations, providers, parsers) are stubbed out
-- Build pipeline works: build, lint, test infrastructure, and packaging all run
-- F5 launches Extension Development Host but nothing visible happens
+- Extension activates on markdown files with visible editing features
+- **Parsers**: CriticMarkup, frontmatter, markdown-table — all implemented, 16/16 tests passing
+- **Decorations**: DecorationManager (expand-on-cursor framework) + MarkdownPolishProvider
+  (heading styling, syntax dimming, frontmatter dimming) — implemented and wired up
+- **Commands**: formatting (bold, italic, code, heading cycle, link, horizontal rule,
+  blockquote), table operations (insert, add/remove row/column, alignment), frontmatter
+  (insert with templates, edit existing fields) — all implemented and registered
+- **Keybindings**: Cmd+B (bold), Cmd+I (italic), Cmd+` (code), Cmd+Shift+H (heading),
+  Cmd+K (link), Cmd+Alt+F (frontmatter), Cmd+Alt+T (table menu)
+- **Test fixture**: `test-fixtures/kitchen-sink.md` covers all supported markdown styles
+- Remaining stubs: comments, track-changes, Claude dispatch, providers, sidebar, google sync
+- F5 should now show heading styling, syntax dimming, and working toolbar commands
+
+### Known Issues
+- VS Code DecorationRenderOptions does not support `fontSize` — headings use fontWeight
+  instead. Investigating alternatives (e.g., codicons, webview-based heading chrome).
+- Remaining lint warnings (16) are all in Phase 2+ stub files (unused params).
 
 ## Phased Roadmap
-Phase 0: Build & test skill — DONE (`/build` skill, test infra fixes, .nvmrc)
-Phase 1: Markdown Polish + Toolbar + Tables (foundation editing UX) — NEXT
-Phase 2: CriticMarkup Display (read/render track changes)
+Phase 0: Build & test skill — DONE
+Phase 1: Markdown Polish + Toolbar + Tables — DONE
+Phase 2: CriticMarkup Display (read/render track changes) — NEXT
 Phase 3: Track Changes Recording + Comments + Simple Claude dispatch
 Phase 4: Claude as Collaborator (context buffer, rewrite, file watcher)
 Phase 5: Agentic Workflows (@claude annotations, conflict resolution)
 Phase 6: Google Workspace Sync — gated on gws-cli availability
          (no-regrets items like frontmatter URL pairing can land any time)
 
-### Phase 1 Scope (next up)
-The goal is a visible, validatable editing experience when you F5:
-1. **Parsers** — implement CriticMarkup, frontmatter, and markdown-table parsers
-   (make the 11 failing unit tests pass)
-2. **Markdown polish decorations** — heading styling, syntax dimming,
-   expand-on-cursor for bold/italic/links/headings
-3. **Decoration manager** — paired collapsed/expanded decoration swap on cursor move
-4. **Toolbar buttons** — bold, italic, heading, link (scoped to markdown files)
-5. **Table operations** — insert table, add/remove row/column, alignment
-6. **Frontmatter command** — insert/edit YAML frontmatter (code fence delimiters)
+### Phase 2 Scope (next up)
+Wire the CriticMarkup parser into a decoration provider for visual track changes:
+1. **CriticMarkup decoration provider** — register with DecorationManager,
+   color additions (green), deletions (red/strikethrough), highlights (yellow),
+   comments (gutter icon + hover tooltip), substitutions (old=red, new=green)
+2. **CodeLens provider** — Accept/Reject buttons above each CriticMarkup range
+3. **Accept/Reject commands** — resolve individual or all changes
+4. **Navigation** — next/previous change commands (Cmd+] / Cmd+[)
+5. **Hover provider** — show comment text and change details on hover
