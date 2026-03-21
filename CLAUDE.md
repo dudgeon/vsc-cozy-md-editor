@@ -21,7 +21,7 @@ and Claude Code integration on top of the native Monaco text editor.
 
 ## Technical Decisions
 - TypeScript, esbuild bundler, VS Code Extension API
-- Dual-target build: desktop (Node.js) + browser (vscode.dev / cowork preview)
+- Dual-target build: desktop (Node.js) + browser (vscode.dev / Claude Code desktop preview)
 - All features operate on the NATIVE text editor — no custom webview editors
 - CriticMarkup is the storage format for all track changes and comments
 - Frontmatter uses code fence delimiters (```), NOT triple-dash (---)
@@ -123,6 +123,22 @@ decoration styles. Use this for:
 The preview page has interactive controls (toggle features, adjust opacity/size)
 and simulates expand-on-cursor via CSS `:hover`. Source: `preview/index.html`.
 
+**Claude Code Desktop Preview Integration**
+`.claude/launch.json` configures the desktop app to auto-launch the preview
+server. The embedded preview should appear in the session toolbar's Preview
+dropdown. If it doesn't work:
+- Restart the session so it picks up `.claude/launch.json`
+- Check Settings → Claude Code → ensure Preview is enabled
+- Verify the session is rooted at the project directory (not a parent)
+- If `launch.json` config is wrong, delete it and ask Claude to re-detect
+- The server must bind to `localhost` (0.0.0.0 works) on port 8271
+- `@vscode/test-web` (`npm run preview:web`) does NOT work in this environment
+  (403 from Microsoft CDN) — use the static HTML preview instead
+
+STATUS: `.claude/launch.json` was created but desktop preview integration has
+not been verified yet. First task in next session should be to confirm the
+preview appears in the toolbar, or troubleshoot if it doesn't.
+
 **Tier 2 — VS Code Extension Host** (F5 / `npm run test:integration`)
 For behavior that requires the full VS Code API:
 - Actual expand-on-cursor with Monaco selection events
@@ -161,7 +177,13 @@ workflow for this extension:
 ## Phased Roadmap
 Phase 0: Build & test skill (use skill-creator to create a /build skill)
 Phase 1: Markdown Polish + Toolbar + Tables (foundation editing UX) ✓
-Phase 1b: Browser Preview (web extension build so extension runs in vscode.dev / cowork browser for feedback) ✓
+Phase 1b: Browser Preview — PARTIALLY COMPLETE
+  ✓ Static HTML style preview (preview/index.html, preview/serve.js)
+  ✓ Web extension build target (esbuild --web, package.json browser entry)
+  ✓ .claude/launch.json created for desktop app preview
+  ✗ Desktop app preview integration NOT YET VERIFIED
+  ✗ @vscode/test-web blocked (403 from Microsoft CDN in this environment)
+  → Next session: verify desktop preview works, troubleshoot if not
 Phase 2: CriticMarkup Display (read/render track changes)
 Phase 3: Track Changes Recording + Comments + Simple Claude dispatch
 Phase 4: Claude as Collaborator (context buffer, rewrite, file watcher)
