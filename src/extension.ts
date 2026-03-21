@@ -16,8 +16,8 @@ export function activate(context: vscode.ExtensionContext): void {
     registerTableCommands(context);
     registerFrontmatterCommands(context);
 
-    // Phase 2: Register CriticMarkup decorations
-    // Phase 2: Register CodeLens provider
+    // Phase 2: CriticMarkup decorations — integrated into DecorationManager
+    // Phase 2: Register CodeLens provider (TODO)
     // Phase 3: Register track changes
     // Phase 3: Register Claude dispatch commands
 }
