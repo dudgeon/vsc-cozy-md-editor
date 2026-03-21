@@ -18,34 +18,35 @@
     "build": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
     "watch": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --watch",
     "lint": "eslint src --ext ts",
-    "test": "mocha --require ts-node/register 'src/test/**/*.test.ts'",
+    "test": "mocha --ui tdd --require ts-node/register 'src/test/suite/parsers/**/*.test.ts'",
     "test:integration": "node ./dist/test/runTest.js",
     "package": "vsce package",
     "vscode:prepublish": "npm run build"
   },
   "dependencies": {
-    "vscode-uri": "^3.0.8",
-    "yaml": "^2.3.4",
-    "markdown-it": "^14.0.0",
     "diff": "^5.1.0",
-    "picomatch": "^3.0.1"
+    "markdown-it": "^14.0.0",
+    "picomatch": "^3.0.1",
+    "vscode-uri": "^3.0.8",
+    "yaml": "^2.3.4"
   },
   "devDependencies": {
-    "@types/vscode": "^1.85.0",
-    "@types/node": "^20.11.0",
-    "@types/markdown-it": "^13.0.7",
     "@types/diff": "^5.0.9",
+    "@types/markdown-it": "^13.0.7",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^20.11.0",
     "@types/picomatch": "^2.3.3",
-    "typescript": "~5.7.0",
-    "esbuild": "^0.19.11",
-    "@vscode/test-electron": "^2.3.8",
-    "@vscode/vsce": "^2.22.0",
-    "eslint": "^8.56.0",
+    "@types/vscode": "^1.85.0",
     "@typescript-eslint/eslint-plugin": "^6.19.0",
     "@typescript-eslint/parser": "^6.19.0",
+    "@vscode/test-electron": "^2.3.8",
+    "@vscode/vsce": "^2.22.0",
+    "esbuild": "^0.19.11",
+    "eslint": "^8.56.0",
     "glob": "^10.3.10",
     "mocha": "^10.2.0",
-    "@types/mocha": "^10.0.6"
+    "ts-node": "^10.9.2",
+    "typescript": "~5.7.0"
   },
   "contributes": {
     "commands": [

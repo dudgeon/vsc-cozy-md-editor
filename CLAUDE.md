@@ -34,12 +34,13 @@ Google Docs round-trip is a key long-term differentiator, but the sync CLI
   These can wait until gws-cli unblocks.
 
 ## Build & Run
+- Requires Node 20+ (`.nvmrc` provided — run `nvm use` if needed)
 - `npm install` — install dependencies
 - `npm run build` — production build via esbuild
 - `npm run watch` — development build with watch mode
 - `npm run lint` — run ESLint
-- `npm run test` — run unit tests
-- `npm run test:integration` — run VS Code integration tests
+- `npm run test` — run parser unit tests (mocha, TDD interface)
+- `npm run test:integration` — run VS Code integration tests (requires Extension Development Host)
 - `npm run package` — package as .vsix for distribution
 - Press F5 in VS Code to launch Extension Development Host
 
@@ -127,36 +128,48 @@ src/
 - Google sync features must degrade gracefully when CLI is unavailable
 
 ## Testing
-- Unit tests for: CriticMarkup parser, table parser/serializer,
+- `npm test` runs parser unit tests via mocha (TDD interface, `suite`/`test`)
+  - Scoped to `src/test/suite/parsers/**/*.test.ts` (no vscode dependency)
+  - Currently: 5 passing, 11 failing (parsers are stubs awaiting Phase 1)
+- `npm run test:integration` runs VS Code integration tests via Extension
+  Development Host (`src/test/suite/extension.test.ts`)
+- Unit tests target: CriticMarkup parser, table parser/serializer,
   frontmatter parser (both delimiter formats), diff-to-CriticMarkup conversion
-- Integration tests for: decoration rendering, expand-on-cursor transitions,
+- Integration tests target: decoration rendering, expand-on-cursor transitions,
   command execution, accept/reject operations
 - Performance test: expand-on-cursor must complete decoration swap in <16ms
   (one frame) on a 500-line document with 50+ decorated elements
-- Run: `npm test`
 
 ## Skills
 The `skills/` directory contains Claude Code skills for this project:
+- `skills/build/` — `/build` slash command. Runs the full build → lint → test →
+  package pipeline and reports pass/fail with actionable summaries.
 - `skills/skill-creator/` — Meta-skill for creating, evaluating, and iterating
-  on new skills. Use this to build project-specific skills (e.g., build/test
-  automation, extension packaging, CriticMarkup validation).
+  on new skills.
 
-### Build & Test Skill (TODO)
-Create a dedicated skill using skill-creator that automates the build/test
-workflow for this extension:
-- Run `npm run build` and parse esbuild output for errors
-- Run `npm run lint` and surface ESLint violations
-- Run `npm test` (unit tests) and `npm run test:integration` (VS Code tests)
-- Package as .vsix and validate the package contents
-- Provide a single `/build` slash command that runs the full pipeline
-- Report pass/fail status with actionable error summaries
+## Current State
+- Extension activates on markdown files but has no user-facing behavior yet
+- All source modules (commands, decorations, providers, parsers) are stubbed out
+- Build pipeline works: build, lint, test infrastructure, and packaging all run
+- F5 launches Extension Development Host but nothing visible happens
 
 ## Phased Roadmap
-Phase 0: Build & test skill (use skill-creator to create a /build skill)
-Phase 1: Markdown Polish + Toolbar + Tables (foundation editing UX)
+Phase 0: Build & test skill — DONE (`/build` skill, test infra fixes, .nvmrc)
+Phase 1: Markdown Polish + Toolbar + Tables (foundation editing UX) — NEXT
 Phase 2: CriticMarkup Display (read/render track changes)
 Phase 3: Track Changes Recording + Comments + Simple Claude dispatch
 Phase 4: Claude as Collaborator (context buffer, rewrite, file watcher)
 Phase 5: Agentic Workflows (@claude annotations, conflict resolution)
 Phase 6: Google Workspace Sync — gated on gws-cli availability
          (no-regrets items like frontmatter URL pairing can land any time)
+
+### Phase 1 Scope (next up)
+The goal is a visible, validatable editing experience when you F5:
+1. **Parsers** — implement CriticMarkup, frontmatter, and markdown-table parsers
+   (make the 11 failing unit tests pass)
+2. **Markdown polish decorations** — heading styling, syntax dimming,
+   expand-on-cursor for bold/italic/links/headings
+3. **Decoration manager** — paired collapsed/expanded decoration swap on cursor move
+4. **Toolbar buttons** — bold, italic, heading, link (scoped to markdown files)
+5. **Table operations** — insert table, add/remove row/column, alignment
+6. **Frontmatter command** — insert/edit YAML frontmatter (code fence delimiters)
