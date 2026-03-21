@@ -1,0 +1,367 @@
+{
+  "name": "markdown-craft",
+  "displayName": "Markdown Craft",
+  "description": "A comprehensive VS Code extension for markdown editing with CriticMarkup track changes.",
+  "version": "0.1.0",
+  "publisher": "dudgeon",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onLanguage:markdown"
+  ],
+  "scripts": {
+    "build": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
+    "watch": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --watch",
+    "lint": "eslint src --ext ts",
+    "test": "mocha --require ts-node/register 'src/test/**/*.test.ts'",
+    "test:integration": "node ./dist/test/runTest.js",
+    "package": "vsce package",
+    "vscode:prepublish": "npm run build"
+  },
+  "dependencies": {
+    "vscode-uri": "^3.0.8",
+    "yaml": "^2.3.4",
+    "markdown-it": "^14.0.0",
+    "diff": "^5.1.0",
+    "picomatch": "^3.0.1"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.11.0",
+    "@types/markdown-it": "^13.0.7",
+    "@types/diff": "^5.0.9",
+    "@types/picomatch": "^2.3.3",
+    "typescript": "~5.7.0",
+    "esbuild": "^0.19.11",
+    "@vscode/test-electron": "^2.3.8",
+    "@vscode/vsce": "^2.22.0",
+    "eslint": "^8.56.0",
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/parser": "^6.19.0",
+    "glob": "^10.3.10",
+    "mocha": "^10.2.0",
+    "@types/mocha": "^10.0.6"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "markdownCraft.saveIndicator",
+        "title": "Save Indicator",
+        "category": "Markdown Craft"
+      },
+      {
+        "command": "markdownCraft.togglePreview",
+        "title": "Toggle Preview",
+        "category": "Markdown Craft"
+      },
+      {
+        "command": "markdownCraft.insertFrontmatter",
+        "title": "Insert Frontmatter",
+        "category": "Markdown Craft"
+      },
+      {
+        "command": "markdownCraft.tableMenu",
+        "title": "Table Menu",
+        "category": "Markdown Craft"
+      },
+      {
+        "command": "markdownCraft.insertBlock",
+        "title": "Insert Block",
+        "category": "Markdown Craft"
+      },
+      {
+        "command": "markdownCraft.toggleTrackChanges",
+        "title": "Toggle Track Changes",
+        "category": "Markdown Craft"
+      },
+      {
+        "command": "markdownCraft.addComment",
+        "title": "Add Comment",
+        "category": "Markdown Craft"
+      },
+      {
+        "command": "markdownCraft.acceptChange",
+        "title": "Accept Change",
+        "category": "Markdown Craft"
+      },
+      {
+        "command": "markdownCraft.rejectChange",
+        "title": "Reject Change",
+        "category": "Markdown Craft"
+      },
+      {
+        "command": "markdownCraft.acceptAllChanges",
+        "title": "Accept All Changes",
+        "category": "Markdown Craft"
+      },
+      {
+        "command": "markdownCraft.rejectAllChanges",
+        "title": "Reject All Changes",
+        "category": "Markdown Craft"
+      },
+      {
+        "command": "markdownCraft.nextChange",
+        "title": "Next Change",
+        "category": "Markdown Craft"
+      },
+      {
+        "command": "markdownCraft.previousChange",
+        "title": "Previous Change",
+        "category": "Markdown Craft"
+      },
+      {
+        "command": "markdownCraft.askClaudeAboutFile",
+        "title": "Ask Claude About File",
+        "category": "Markdown Craft"
+      },
+      {
+        "command": "markdownCraft.askClaudeAboutSelection",
+        "title": "Ask Claude About Selection",
+        "category": "Markdown Craft"
+      },
+      {
+        "command": "markdownCraft.sendFileToClaudeContext",
+        "title": "Send File to Claude Context",
+        "category": "Markdown Craft"
+      },
+      {
+        "command": "markdownCraft.addToContextBuffer",
+        "title": "Add to Context Buffer",
+        "category": "Markdown Craft"
+      },
+      {
+        "command": "markdownCraft.dispatchContextBuffer",
+        "title": "Dispatch Context Buffer",
+        "category": "Markdown Craft"
+      },
+      {
+        "command": "markdownCraft.clearContextBuffer",
+        "title": "Clear Context Buffer",
+        "category": "Markdown Craft"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "markdownCraft.togglePreview",
+          "when": "resourceLangId == markdown",
+          "group": "navigation"
+        },
+        {
+          "command": "markdownCraft.toggleTrackChanges",
+          "when": "resourceLangId == markdown",
+          "group": "navigation"
+        },
+        {
+          "command": "markdownCraft.saveIndicator",
+          "when": "resourceLangId == markdown",
+          "group": "navigation"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "markdownCraft.tableMenu",
+          "when": "resourceLangId == markdown",
+          "group": "markdownCraft@1"
+        },
+        {
+          "command": "markdownCraft.insertBlock",
+          "when": "resourceLangId == markdown",
+          "group": "markdownCraft@2"
+        },
+        {
+          "command": "markdownCraft.addComment",
+          "when": "resourceLangId == markdown && editorHasSelection",
+          "group": "markdownCraft@3"
+        },
+        {
+          "command": "markdownCraft.acceptChange",
+          "when": "resourceLangId == markdown",
+          "group": "markdownCraft@4"
+        },
+        {
+          "command": "markdownCraft.rejectChange",
+          "when": "resourceLangId == markdown",
+          "group": "markdownCraft@5"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Markdown Craft",
+      "properties": {
+        "markdownCraft.typography.fontFamily": {
+          "type": "string",
+          "default": "Inter",
+          "description": "Font family for the markdown editor."
+        },
+        "markdownCraft.typography.fontSize": {
+          "type": "number",
+          "default": 16,
+          "description": "Font size for the markdown editor."
+        },
+        "markdownCraft.typography.lineHeight": {
+          "type": "number",
+          "default": 1.6,
+          "description": "Line height for the markdown editor."
+        },
+        "markdownCraft.polish.dimSyntaxMarkers": {
+          "type": "boolean",
+          "default": true,
+          "description": "Dim markdown syntax markers for a cleaner editing experience."
+        },
+        "markdownCraft.polish.styleHeadings": {
+          "type": "boolean",
+          "default": true,
+          "description": "Apply visual styling to headings."
+        },
+        "markdownCraft.polish.dimFrontmatter": {
+          "type": "boolean",
+          "default": true,
+          "description": "Dim frontmatter blocks for reduced visual noise."
+        },
+        "markdownCraft.tables.autoAlignOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically align table columns on save."
+        },
+        "markdownCraft.tables.defaultColumns": {
+          "type": "number",
+          "default": 3,
+          "description": "Default number of columns when inserting a new table."
+        },
+        "markdownCraft.tables.defaultRows": {
+          "type": "number",
+          "default": 3,
+          "description": "Default number of rows when inserting a new table."
+        },
+        "markdownCraft.criticmarkup.additionColor": {
+          "type": "string",
+          "default": "rgba(0, 128, 0, 0.3)",
+          "description": "Background color for CriticMarkup additions."
+        },
+        "markdownCraft.criticmarkup.deletionColor": {
+          "type": "string",
+          "default": "rgba(255, 0, 0, 0.3)",
+          "description": "Background color for CriticMarkup deletions."
+        },
+        "markdownCraft.criticmarkup.highlightColor": {
+          "type": "string",
+          "default": "rgba(255, 255, 0, 0.3)",
+          "description": "Background color for CriticMarkup highlights."
+        },
+        "markdownCraft.criticmarkup.commentGutterIcon": {
+          "type": "string",
+          "default": "comment",
+          "description": "Gutter icon to use for CriticMarkup comments."
+        },
+        "markdownCraft.trackChanges.authorName": {
+          "type": "string",
+          "default": "Author",
+          "description": "Author name used when tracking changes."
+        },
+        "markdownCraft.frontmatter.delimiter": {
+          "type": "string",
+          "enum": [
+            "codefence",
+            "dashes"
+          ],
+          "default": "codefence",
+          "description": "Delimiter style for frontmatter blocks."
+        },
+        "markdownCraft.claude.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Claude AI integration."
+        },
+        "markdownCraft.claude.terminalName": {
+          "type": "string",
+          "default": "Claude",
+          "description": "Name of the terminal used for Claude interactions."
+        },
+        "markdownCraft.claude.watchForExternalChanges": {
+          "type": "boolean",
+          "default": true,
+          "description": "Watch for external file changes made by Claude."
+        },
+        "markdownCraft.google.showSyncStatus": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show Google Docs sync status in the editor."
+        },
+        "markdownCraft.google.showOpenInDocsCodeLens": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show a CodeLens to open the file in Google Docs."
+        }
+      }
+    },
+    "keybindings": [
+      {
+        "command": "markdownCraft.togglePreview",
+        "key": "ctrl+shift+m",
+        "mac": "cmd+shift+m",
+        "when": "resourceLangId == markdown"
+      },
+      {
+        "command": "markdownCraft.toggleTrackChanges",
+        "key": "ctrl+shift+t",
+        "mac": "cmd+shift+t",
+        "when": "resourceLangId == markdown"
+      },
+      {
+        "command": "markdownCraft.addComment",
+        "key": "ctrl+alt+c",
+        "mac": "cmd+alt+c",
+        "when": "resourceLangId == markdown && editorHasSelection"
+      },
+      {
+        "command": "markdownCraft.insertFrontmatter",
+        "key": "ctrl+alt+f",
+        "mac": "cmd+alt+f",
+        "when": "resourceLangId == markdown"
+      },
+      {
+        "command": "markdownCraft.tableMenu",
+        "key": "ctrl+alt+t",
+        "mac": "cmd+alt+t",
+        "when": "resourceLangId == markdown"
+      },
+      {
+        "command": "markdownCraft.nextChange",
+        "key": "ctrl+]",
+        "mac": "cmd+]",
+        "when": "resourceLangId == markdown"
+      },
+      {
+        "command": "markdownCraft.previousChange",
+        "key": "ctrl+[",
+        "mac": "cmd+[",
+        "when": "resourceLangId == markdown"
+      },
+      {
+        "command": "markdownCraft.acceptChange",
+        "key": "ctrl+alt+a",
+        "mac": "cmd+alt+a",
+        "when": "resourceLangId == markdown"
+      },
+      {
+        "command": "markdownCraft.rejectChange",
+        "key": "ctrl+alt+r",
+        "mac": "cmd+alt+r",
+        "when": "resourceLangId == markdown"
+      }
+    ],
+    "configurationDefaults": {
+      "[markdown]": {
+        "editor.fontFamily": "Inter",
+        "editor.fontSize": 16,
+        "editor.lineHeight": 1.6
+      }
+    }
+  }
+}

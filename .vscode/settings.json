@@ -1,0 +1,14 @@
+{
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+    "eslint.validate": ["typescript"],
+    "files.exclude": {
+        "dist": false,
+        "node_modules": true
+    },
+    "search.exclude": {
+        "dist": true,
+        "node_modules": true
+    }
+}
