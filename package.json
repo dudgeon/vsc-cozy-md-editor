@@ -18,34 +18,35 @@
     "build": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
     "watch": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --watch",
     "lint": "eslint src --ext ts",
-    "test": "mocha --require ts-node/register 'src/test/**/*.test.ts'",
+    "test": "mocha --ui tdd --require ts-node/register 'src/test/**/parsers/*.test.ts'",
     "test:integration": "node ./dist/test/runTest.js",
     "package": "vsce package",
     "vscode:prepublish": "npm run build"
   },
   "dependencies": {
-    "vscode-uri": "^3.0.8",
-    "yaml": "^2.3.4",
-    "markdown-it": "^14.0.0",
     "diff": "^5.1.0",
-    "picomatch": "^3.0.1"
+    "markdown-it": "^14.0.0",
+    "picomatch": "^3.0.1",
+    "vscode-uri": "^3.0.8",
+    "yaml": "^2.3.4"
   },
   "devDependencies": {
-    "@types/vscode": "^1.85.0",
-    "@types/node": "^20.11.0",
-    "@types/markdown-it": "^13.0.7",
     "@types/diff": "^5.0.9",
+    "@types/markdown-it": "^13.0.7",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^20.11.0",
     "@types/picomatch": "^2.3.3",
-    "typescript": "~5.7.0",
-    "esbuild": "^0.19.11",
-    "@vscode/test-electron": "^2.3.8",
-    "@vscode/vsce": "^2.22.0",
-    "eslint": "^8.56.0",
+    "@types/vscode": "^1.85.0",
     "@typescript-eslint/eslint-plugin": "^6.19.0",
     "@typescript-eslint/parser": "^6.19.0",
+    "@vscode/test-electron": "^2.3.8",
+    "@vscode/vsce": "^2.22.0",
+    "esbuild": "^0.19.11",
+    "eslint": "^8.56.0",
     "glob": "^10.3.10",
     "mocha": "^10.2.0",
-    "@types/mocha": "^10.0.6"
+    "ts-node": "^10.9.2",
+    "typescript": "~5.7.0"
   },
   "contributes": {
     "commands": [
@@ -67,6 +68,31 @@
       {
         "command": "markdownCraft.tableMenu",
         "title": "Table Menu",
+        "category": "Markdown Craft"
+      },
+      {
+        "command": "markdownCraft.addTableRow",
+        "title": "Add Table Row",
+        "category": "Markdown Craft"
+      },
+      {
+        "command": "markdownCraft.removeTableRow",
+        "title": "Remove Table Row",
+        "category": "Markdown Craft"
+      },
+      {
+        "command": "markdownCraft.addTableColumn",
+        "title": "Add Table Column",
+        "category": "Markdown Craft"
+      },
+      {
+        "command": "markdownCraft.removeTableColumn",
+        "title": "Remove Table Column",
+        "category": "Markdown Craft"
+      },
+      {
+        "command": "markdownCraft.alignTable",
+        "title": "Align Table",
         "category": "Markdown Craft"
       },
       {
@@ -142,6 +168,56 @@
       {
         "command": "markdownCraft.clearContextBuffer",
         "title": "Clear Context Buffer",
+        "category": "Markdown Craft"
+      },
+      {
+        "command": "markdownCraft.toggleBold",
+        "title": "Toggle Bold",
+        "category": "Markdown Craft"
+      },
+      {
+        "command": "markdownCraft.toggleItalic",
+        "title": "Toggle Italic",
+        "category": "Markdown Craft"
+      },
+      {
+        "command": "markdownCraft.toggleCode",
+        "title": "Toggle Code",
+        "category": "Markdown Craft"
+      },
+      {
+        "command": "markdownCraft.toggleStrikethrough",
+        "title": "Toggle Strikethrough",
+        "category": "Markdown Craft"
+      },
+      {
+        "command": "markdownCraft.insertHorizontalRule",
+        "title": "Insert Horizontal Rule",
+        "category": "Markdown Craft"
+      },
+      {
+        "command": "markdownCraft.insertLink",
+        "title": "Insert Link",
+        "category": "Markdown Craft"
+      },
+      {
+        "command": "markdownCraft.insertImage",
+        "title": "Insert Image",
+        "category": "Markdown Craft"
+      },
+      {
+        "command": "markdownCraft.editFrontmatterField",
+        "title": "Edit Frontmatter Field",
+        "category": "Markdown Craft"
+      },
+      {
+        "command": "markdownCraft.addFrontmatterField",
+        "title": "Add Frontmatter Field",
+        "category": "Markdown Craft"
+      },
+      {
+        "command": "markdownCraft.removeFrontmatterField",
+        "title": "Remove Frontmatter Field",
         "category": "Markdown Craft"
       }
     ],
@@ -353,6 +429,30 @@
         "command": "markdownCraft.rejectChange",
         "key": "ctrl+alt+r",
         "mac": "cmd+alt+r",
+        "when": "resourceLangId == markdown"
+      },
+      {
+        "command": "markdownCraft.toggleBold",
+        "key": "ctrl+b",
+        "mac": "cmd+b",
+        "when": "resourceLangId == markdown"
+      },
+      {
+        "command": "markdownCraft.toggleItalic",
+        "key": "ctrl+i",
+        "mac": "cmd+i",
+        "when": "resourceLangId == markdown"
+      },
+      {
+        "command": "markdownCraft.toggleCode",
+        "key": "ctrl+`",
+        "mac": "cmd+`",
+        "when": "resourceLangId == markdown"
+      },
+      {
+        "command": "markdownCraft.toggleStrikethrough",
+        "key": "ctrl+shift+x",
+        "mac": "cmd+shift+x",
         "when": "resourceLangId == markdown"
       }
     ],
