@@ -24,7 +24,7 @@
     "lint": "eslint src --ext ts",
     "test": "mocha --ui tdd --require ts-node/register 'src/test/**/parsers/*.test.ts'",
     "test:integration": "node ./dist/test/runTest.js",
-    "package": "vsce package",
+    "package": "vsce package --baseContentUrl https://github.com/dudgeon/vsc-cozy-md-editor/raw/main --baseImagesUrl https://github.com/dudgeon/vsc-cozy-md-editor/raw/main",
     "vscode:prepublish": "npm run build"
   },
   "dependencies": {
