@@ -184,7 +184,14 @@ Phase 1b: Browser Preview — PARTIALLY COMPLETE
   ✗ Desktop app preview integration NOT YET VERIFIED
   ✗ @vscode/test-web blocked (403 from Microsoft CDN in this environment)
   → Next session: verify desktop preview works, troubleshoot if not
-Phase 2: CriticMarkup Display (read/render track changes)
+Phase 2: CriticMarkup Display (read/render track changes) ✓
+  ✓ CriticMarkup parser (all 5 patterns, unit tested)
+  ✓ CriticMarkup decoration provider with expand-on-cursor
+  ✓ Addition (green bg), deletion (red bg + strikethrough), substitution (old/new split)
+  ✓ Highlight (yellow bg), comment (blue bg + italic)
+  ✓ Syntax markers dimmed when cursor away, visible when nearby
+  ✓ Integrated into DecorationManager (cursor swap, document change, config change)
+  ✓ Preview HTML has CriticMarkup examples
 Phase 3: Track Changes Recording + Comments + Simple Claude dispatch
 Phase 4: Claude as Collaborator (context buffer, rewrite, file watcher)
 Phase 5: Agentic Workflows (@claude annotations, conflict resolution)

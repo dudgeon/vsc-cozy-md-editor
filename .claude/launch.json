@@ -1,6 +1,11 @@
 {
-  "command": "node",
-  "args": ["preview/serve.js", "8271"],
-  "port": 8271,
-  "readyPattern": "Preview server running"
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "style-preview",
+      "program": "preview/serve.js",
+      "args": ["8271"],
+      "port": 8271
+    }
+  ]
 }

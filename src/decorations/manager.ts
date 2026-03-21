@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { MarkdownPolishProvider } from './markdown-polish';
+import { CriticMarkupDecorationProvider } from './criticmarkup';
 
 /**
  * Manages decoration lifecycle for the expand-on-cursor pattern.
@@ -16,6 +17,7 @@ import { MarkdownPolishProvider } from './markdown-polish';
 export class DecorationManager implements vscode.Disposable {
     private disposables: vscode.Disposable[] = [];
     private polishProvider: MarkdownPolishProvider;
+    private criticMarkupProvider: CriticMarkupDecorationProvider;
 
     /** Debounce timer for document changes (re-parse is more expensive). */
     private documentChangeTimer: ReturnType<typeof setTimeout> | undefined;
@@ -23,6 +25,7 @@ export class DecorationManager implements vscode.Disposable {
 
     constructor() {
         this.polishProvider = new MarkdownPolishProvider();
+        this.criticMarkupProvider = new CriticMarkupDecorationProvider();
 
         // Listen for active editor changes.
         this.disposables.push(
@@ -30,6 +33,8 @@ export class DecorationManager implements vscode.Disposable {
                 if (editor && this.isMarkdown(editor)) {
                     this.polishProvider.invalidateCache();
                     this.polishProvider.updateDecorations(editor);
+                    this.criticMarkupProvider.invalidateCache();
+                    this.criticMarkupProvider.updateDecorations(editor);
                 }
             })
         );
@@ -39,6 +44,7 @@ export class DecorationManager implements vscode.Disposable {
             vscode.window.onDidChangeTextEditorSelection((event) => {
                 if (this.isMarkdown(event.textEditor)) {
                     this.polishProvider.swapForCursor(event.textEditor);
+                    this.criticMarkupProvider.swapForCursor(event.textEditor);
                 }
             })
         );
@@ -65,6 +71,8 @@ export class DecorationManager implements vscode.Disposable {
                     if (currentEditor && currentEditor.document === event.document && this.isMarkdown(currentEditor)) {
                         this.polishProvider.invalidateCache();
                         this.polishProvider.updateDecorations(currentEditor);
+                        this.criticMarkupProvider.invalidateCache();
+                        this.criticMarkupProvider.updateDecorations(currentEditor);
                     }
                 }, DecorationManager.DOCUMENT_CHANGE_DELAY_MS);
             })
@@ -80,6 +88,13 @@ export class DecorationManager implements vscode.Disposable {
                         this.polishProvider.updateDecorations(editor);
                     }
                 }
+                if (event.affectsConfiguration('markdownCraft.criticmarkup')) {
+                    this.criticMarkupProvider.invalidateCache();
+                    const editor = vscode.window.activeTextEditor;
+                    if (editor && this.isMarkdown(editor)) {
+                        this.criticMarkupProvider.updateDecorations(editor);
+                    }
+                }
             })
         );
 
@@ -87,6 +102,7 @@ export class DecorationManager implements vscode.Disposable {
         const activeEditor = vscode.window.activeTextEditor;
         if (activeEditor && this.isMarkdown(activeEditor)) {
             this.polishProvider.updateDecorations(activeEditor);
+            this.criticMarkupProvider.updateDecorations(activeEditor);
         }
     }
 
@@ -102,6 +118,7 @@ export class DecorationManager implements vscode.Disposable {
             clearTimeout(this.documentChangeTimer);
         }
         this.polishProvider.dispose();
+        this.criticMarkupProvider.dispose();
         this.disposables.forEach(d => d.dispose());
         this.disposables = [];
     }
