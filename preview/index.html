@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Markdown Craft — Style Preview</title>
+<style>
+/* === VS Code dark theme baseline === */
+:root {
+  --bg: #1e1e1e;
+  --fg: #d4d4d4;
+  --fg-dim: #6a6a6a;
+  --accent: #569cd6;
+  --green: rgba(0, 128, 0, 0.3);
+  --red: rgba(255, 0, 0, 0.3);
+  --yellow: rgba(255, 255, 0, 0.3);
+  --border: #333;
+  --toolbar-bg: #252526;
+  --toolbar-border: #3c3c3c;
+  --button-hover: #3c3c3c;
+  --dim-opacity: 0.35;
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-size: 16px;
+  --line-height: 1.6;
+  --mono: 'Cascadia Code', 'Fira Code', Consolas, monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-family);
+  font-size: var(--font-size);
+  line-height: var(--line-height);
+}
+
+/* === Layout === */
+.preview-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+.section-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 12px 20px 4px;
+  border-top: 1px solid var(--border);
+  margin-top: 24px;
+}
+
+.section-label:first-child { border-top: none; margin-top: 0; }
+
+/* === Editor simulation === */
+.editor {
+  padding: 8px 20px 20px;
+  font-family: var(--font-family);
+  font-size: var(--font-size);
+  line-height: var(--line-height);
+  cursor: text;
+}
+
+.editor .line {
+  padding: 1px 0;
+  position: relative;
+  border-radius: 2px;
+  transition: background 0.1s;
+}
+
+.editor .line:hover {
+  background: rgba(255,255,255,0.03);
+}
+
+/* === Syntax markers — dimmed by default, full opacity on hover === */
+.syntax-marker {
+  opacity: var(--dim-opacity);
+  transition: opacity 0.15s;
+}
+
+.line:hover .syntax-marker {
+  opacity: 1;
+}
+
+/* === Headings === */
+.h1-line { font-size: 2.0em; font-weight: bold; letter-spacing: -0.02em; }
+.h2-line { font-size: 1.6em; font-weight: bold; letter-spacing: -0.02em; }
+.h3-line { font-size: 1.3em; font-weight: 600; }
+.h4-line { font-size: 1.1em; font-weight: 600; }
+.h5-line { font-size: 1.0em; font-weight: 600; }
+.h6-line { font-size: 0.9em; font-weight: normal; }
+
+/* === Inline styles === */
+.bold-content { font-weight: bold; }
+.italic-content { font-style: italic; }
+.code-content {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  background: rgba(255,255,255,0.06);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+.strikethrough-content { text-decoration: line-through; }
+.link-text { color: var(--accent); }
+.link-url { opacity: var(--dim-opacity); font-size: 0.9em; }
+
+/* === Frontmatter === */
+.frontmatter {
+  opacity: var(--dim-opacity);
+  font-family: var(--mono);
+  font-size: 0.85em;
+  color: #9cdcfe;
+  transition: opacity 0.15s;
+}
+.frontmatter:hover { opacity: 1; }
+.frontmatter .fm-key { color: #9cdcfe; }
+.frontmatter .fm-value { color: #ce9178; }
+.frontmatter .fm-delimiter { color: #808080; }
+
+/* === CriticMarkup === */
+.critic-add { background: var(--green); }
+.critic-del { background: var(--red); text-decoration: line-through; }
+.critic-sub-old { background: var(--red); text-decoration: line-through; }
+.critic-sub-new { background: var(--green); }
+.critic-highlight { background: var(--yellow); }
+.critic-comment {
+  color: #6a9955;
+  font-style: italic;
+}
+.critic-marker {
+  opacity: var(--dim-opacity);
+  font-family: var(--mono);
+  font-size: 0.85em;
+}
+.line:hover .critic-marker { opacity: 1; }
+
+/* === Toolbar === */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 8px;
+  background: var(--toolbar-bg);
+  border-bottom: 1px solid var(--toolbar-border);
+  font-family: var(--mono);
+  font-size: 13px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.toolbar-separator {
+  width: 1px;
+  height: 18px;
+  background: var(--toolbar-border);
+  margin: 0 6px;
+}
+
+.toolbar button {
+  background: none;
+  border: 1px solid transparent;
+  color: var(--fg);
+  padding: 3px 7px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: 1;
+}
+
+.toolbar button:hover {
+  background: var(--button-hover);
+  border-color: var(--toolbar-border);
+}
+
+.toolbar button.active {
+  background: rgba(86, 156, 214, 0.2);
+  border-color: var(--accent);
+}
+
+.toolbar .label {
+  color: var(--fg-dim);
+  font-size: 11px;
+  margin-right: 4px;
+}
+
+/* === Controls panel === */
+.controls {
+  position: fixed;
+  top: 40px;
+  right: 16px;
+  background: var(--toolbar-bg);
+  border: 1px solid var(--toolbar-border);
+  border-radius: 6px;
+  padding: 12px;
+  font-family: var(--mono);
+  font-size: 12px;
+  z-index: 20;
+  min-width: 200px;
+}
+
+.controls h3 {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 8px;
+  letter-spacing: 0.05em;
+}
+
+.controls label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  cursor: pointer;
+}
+
+.controls input[type="checkbox"] {
+  accent-color: var(--accent);
+}
+
+.controls input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.controls .range-label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="label">Markdown Craft</span>
+  <div class="toolbar-separator"></div>
+  <div class="toolbar-group">
+    <button title="Bold (Ctrl+B)"><b>B</b></button>
+    <button title="Italic (Ctrl+I)"><i>I</i></button>
+    <button title="Code (Ctrl+`)"><code>&lt;/&gt;</code></button>
+    <button title="Strikethrough (Ctrl+Shift+X)"><s>S</s></button>
+  </div>
+  <div class="toolbar-separator"></div>
+  <div class="toolbar-group">
+    <button title="Insert Link (Ctrl+K)">Link</button>
+    <button title="Insert Image">Img</button>
+    <button title="Insert Horizontal Rule">HR</button>
+  </div>
+  <div class="toolbar-separator"></div>
+  <div class="toolbar-group">
+    <button title="Table Menu (Ctrl+Alt+T)">Table</button>
+    <button title="Insert Frontmatter (Ctrl+Alt+F)">FM</button>
+  </div>
+  <div class="toolbar-separator"></div>
+  <div class="toolbar-group">
+    <button title="Toggle Track Changes" class="active">Track</button>
+    <button title="Add Comment">Comment</button>
+  </div>
+</div>
+
+<div class="controls" id="controls">
+  <h3>Preview Controls</h3>
+  <label><input type="checkbox" id="chk-headings" checked> Style headings</label>
+  <label><input type="checkbox" id="chk-dim" checked> Dim syntax markers</label>
+  <label><input type="checkbox" id="chk-frontmatter" checked> Dim frontmatter</label>
+  <label><input type="checkbox" id="chk-critic" checked> Show CriticMarkup</label>
+  <div style="margin-top: 8px;">
+    <div class="range-label"><span>Dim opacity</span><span id="opacity-val">0.35</span></div>
+    <input type="range" id="dim-opacity" min="0" max="1" step="0.05" value="0.35">
+  </div>
+  <div style="margin-top: 8px;">
+    <div class="range-label"><span>Font size</span><span id="fontsize-val">16px</span></div>
+    <input type="range" id="font-size" min="12" max="24" step="1" value="16">
+  </div>
+</div>
+
+<div class="preview-container">
+
+  <!-- Frontmatter -->
+  <div class="section-label">Frontmatter (hover to expand)</div>
+  <div class="editor">
+    <div class="frontmatter" id="frontmatter-block">
+      <div class="line"><span class="fm-delimiter">```yaml</span></div>
+      <div class="line"><span class="fm-key">title</span>: <span class="fm-value">"My Document"</span></div>
+      <div class="line"><span class="fm-key">author</span>: <span class="fm-value">"Jane Smith"</span></div>
+      <div class="line"><span class="fm-key">date</span>: <span class="fm-value">2026-03-21</span></div>
+      <div class="line"><span class="fm-key">tags</span>: <span class="fm-value">[draft, review]</span></div>
+      <div class="line"><span class="fm-delimiter">```</span></div>
+    </div>
+  </div>
+
+  <!-- Headings -->
+  <div class="section-label">Headings (hover to show markers)</div>
+  <div class="editor" id="headings-editor">
+    <div class="line h1-line"><span class="syntax-marker"># </span>Document Title</div>
+    <div class="line h2-line"><span class="syntax-marker">## </span>Major Section</div>
+    <div class="line h3-line"><span class="syntax-marker">### </span>Subsection Heading</div>
+    <div class="line h4-line"><span class="syntax-marker">#### </span>Detail Heading</div>
+    <div class="line h5-line"><span class="syntax-marker">##### </span>Minor Heading</div>
+    <div class="line h6-line"><span class="syntax-marker">###### </span>Smallest Heading</div>
+  </div>
+
+  <!-- Inline formatting -->
+  <div class="section-label">Inline Formatting (hover to show markers)</div>
+  <div class="editor">
+    <div class="line">This has <span class="syntax-marker">**</span><span class="bold-content">bold text</span><span class="syntax-marker">**</span> in the middle of a sentence.</div>
+    <div class="line">This has <span class="syntax-marker">*</span><span class="italic-content">italic text</span><span class="syntax-marker">*</span> for emphasis.</div>
+    <div class="line">Use <span class="syntax-marker">`</span><span class="code-content">inline code</span><span class="syntax-marker">`</span> for technical terms.</div>
+    <div class="line">This is <span class="syntax-marker">~~</span><span class="strikethrough-content">no longer relevant</span><span class="syntax-marker">~~</span> struck through.</div>
+    <div class="line">Visit <span class="syntax-marker">[</span><span class="link-text">the project</span><span class="syntax-marker">](</span><span class="link-url">https://example.com</span><span class="syntax-marker">)</span> for more info.</div>
+    <div class="line">&nbsp;</div>
+    <div class="line">A line with <span class="syntax-marker">**</span><span class="bold-content">multiple</span><span class="syntax-marker">**</span> <span class="syntax-marker">*</span><span class="italic-content">formatted</span><span class="syntax-marker">*</span> <span class="syntax-marker">`</span><span class="code-content">elements</span><span class="syntax-marker">`</span> together.</div>
+  </div>
+
+  <!-- CriticMarkup -->
+  <div class="section-label">CriticMarkup (hover to show delimiters)</div>
+  <div class="editor" id="critic-editor">
+    <div class="line">This sentence has <span class="critic-marker">{++ </span><span class="critic-add">added text</span><span class="critic-marker"> ++}</span> inserted.</div>
+    <div class="line">This sentence has <span class="critic-marker">{-- </span><span class="critic-del">deleted text</span><span class="critic-marker"> --}</span> removed.</div>
+    <div class="line">This has a <span class="critic-marker">{~~ </span><span class="critic-sub-old">old wording</span><span class="critic-marker"> ~> </span><span class="critic-sub-new">new wording</span><span class="critic-marker"> ~~}</span> substitution.</div>
+    <div class="line">This is <span class="critic-marker">{== </span><span class="critic-highlight">highlighted for review</span><span class="critic-marker"> ==}</span><span class="critic-marker">{>> </span><span class="critic-comment">needs editor approval</span><span class="critic-marker"> <<}</span></div>
+    <div class="line">A standalone comment: <span class="critic-marker">{>> </span><span class="critic-comment">TODO: verify citation</span><span class="critic-marker"> <<}</span></div>
+  </div>
+
+  <!-- Mixed content -->
+  <div class="section-label">Realistic Document</div>
+  <div class="editor">
+    <div class="line h2-line"><span class="syntax-marker">## </span>Introduction</div>
+    <div class="line">&nbsp;</div>
+    <div class="line">The <span class="syntax-marker">**</span><span class="bold-content">Markdown Craft</span><span class="syntax-marker">**</span> extension provides a <span class="syntax-marker">*</span><span class="italic-content">polished</span><span class="syntax-marker">*</span> editing experience</div>
+    <div class="line">for knowledge work. It uses <span class="syntax-marker">`</span><span class="code-content">CriticMarkup</span><span class="syntax-marker">`</span> for <span class="critic-marker">{-- </span><span class="critic-del">change tracking</span><span class="critic-marker"> --}</span><span class="critic-marker">{++ </span><span class="critic-add">track changes</span><span class="critic-marker"> ++}</span>.</div>
+    <div class="line">&nbsp;</div>
+    <div class="line h3-line"><span class="syntax-marker">### </span>Key Features</div>
+    <div class="line">&nbsp;</div>
+    <div class="line">- <span class="syntax-marker">**</span><span class="bold-content">Expand-on-cursor</span><span class="syntax-marker">**</span>: syntax markers dim until your cursor reaches them</div>
+    <div class="line">- <span class="syntax-marker">**</span><span class="bold-content">CriticMarkup</span><span class="syntax-marker">**</span>: <span class="critic-marker">{== </span><span class="critic-highlight">full track changes</span><span class="critic-marker"> ==}</span><span class="critic-marker">{>> </span><span class="critic-comment">with inline comments</span><span class="critic-marker"> <<}</span></div>
+    <div class="line">- See the <span class="syntax-marker">[</span><span class="link-text">documentation</span><span class="syntax-marker">](</span><span class="link-url">https://criticmarkup.com/spec.php</span><span class="syntax-marker">)</span> for the full spec</div>
+  </div>
+
+  <!-- Table -->
+  <div class="section-label">Tables</div>
+  <div class="editor">
+    <div class="line" style="font-family: var(--mono); font-size: 0.9em;">
+      <span class="syntax-marker">|</span> Feature         <span class="syntax-marker">|</span> Status    <span class="syntax-marker">|</span> Phase <span class="syntax-marker">|</span>
+    </div>
+    <div class="line" style="font-family: var(--mono); font-size: 0.9em;">
+      <span class="syntax-marker">|</span> --------------- <span class="syntax-marker">|</span> --------- <span class="syntax-marker">|</span> ----- <span class="syntax-marker">|</span>
+    </div>
+    <div class="line" style="font-family: var(--mono); font-size: 0.9em;">
+      <span class="syntax-marker">|</span> Markdown Polish <span class="syntax-marker">|</span> Complete  <span class="syntax-marker">|</span> 1     <span class="syntax-marker">|</span>
+    </div>
+    <div class="line" style="font-family: var(--mono); font-size: 0.9em;">
+      <span class="syntax-marker">|</span> CriticMarkup    <span class="syntax-marker">|</span> Next      <span class="syntax-marker">|</span> 2     <span class="syntax-marker">|</span>
+    </div>
+    <div class="line" style="font-family: var(--mono); font-size: 0.9em;">
+      <span class="syntax-marker">|</span> Track Changes   <span class="syntax-marker">|</span> Planned   <span class="syntax-marker">|</span> 3     <span class="syntax-marker">|</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// Controls
+const chkHeadings = document.getElementById('chk-headings');
+const chkDim = document.getElementById('chk-dim');
+const chkFrontmatter = document.getElementById('chk-frontmatter');
+const chkCritic = document.getElementById('chk-critic');
+const dimOpacity = document.getElementById('dim-opacity');
+const fontSize = document.getElementById('font-size');
+
+chkHeadings.addEventListener('change', () => {
+  document.getElementById('headings-editor').style.display = chkHeadings.checked ? '' : 'none';
+});
+
+chkDim.addEventListener('change', () => {
+  document.querySelectorAll('.syntax-marker').forEach(el => {
+    el.style.display = chkDim.checked ? '' : 'none';
+  });
+});
+
+chkFrontmatter.addEventListener('change', () => {
+  const fm = document.getElementById('frontmatter-block');
+  fm.style.opacity = chkFrontmatter.checked ? '' : '1';
+  fm.classList.toggle('frontmatter', chkFrontmatter.checked);
+});
+
+chkCritic.addEventListener('change', () => {
+  document.getElementById('critic-editor').style.display = chkCritic.checked ? '' : 'none';
+});
+
+dimOpacity.addEventListener('input', () => {
+  const val = dimOpacity.value;
+  document.getElementById('opacity-val').textContent = val;
+  document.documentElement.style.setProperty('--dim-opacity', val);
+});
+
+fontSize.addEventListener('input', () => {
+  const val = fontSize.value + 'px';
+  document.getElementById('fontsize-val').textContent = val;
+  document.documentElement.style.setProperty('--font-size', val);
+});
+</script>
+
+</body>
+</html>

@@ -20,6 +20,7 @@
     "build:web": "node esbuild.js --web",
     "watch": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --watch",
     "watch:web": "node esbuild.js --web --watch",
+    "preview": "node preview/serve.js",
     "preview:web": "npm run build:web && npx @vscode/test-web --extensionDevelopmentPath=.",
     "lint": "eslint src --ext ts",
     "test": "mocha --ui tdd --require ts-node/register 'src/test/**/parsers/*.test.ts'",

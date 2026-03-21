@@ -11,6 +11,7 @@ and Claude Code integration on top of the native Monaco text editor.
 - `npm run build:web` — browser build via esbuild (platform: browser)
 - `npm run watch` — desktop build with watch mode
 - `npm run watch:web` — browser build with watch mode
+- `npm run preview` — launch style preview at http://localhost:8271 (Tier 1)
 - `npm run preview:web` — build + launch browser VS Code with extension loaded
 - `npm run lint` — run ESLint
 - `npm run test` — run unit tests
@@ -104,7 +105,35 @@ src/
 - Extension core must stay browser-compatible (no Node.js APIs in src/ outside
   test/). Node-only features (Claude terminal, file watcher) degrade in web.
 
-## Testing
+## Testing & Preview
+
+### Two-Tier Feedback Strategy
+
+**Tier 1 — Browser Style Preview** (`npm run preview`)
+For rapid visual iteration on typography, colors, opacity, and layout.
+Runs a static HTML page at `http://localhost:8271` that mirrors the extension's
+decoration styles. Use this for:
+- Heading font sizes, weights, letter-spacing
+- Syntax marker dim opacity values
+- Frontmatter dimming appearance
+- CriticMarkup colors (addition/deletion/highlight/comment)
+- Toolbar button layout and grouping
+- Font family and size tuning
+
+The preview page has interactive controls (toggle features, adjust opacity/size)
+and simulates expand-on-cursor via CSS `:hover`. Source: `preview/index.html`.
+
+**Tier 2 — VS Code Extension Host** (F5 / `npm run test:integration`)
+For behavior that requires the full VS Code API:
+- Actual expand-on-cursor with Monaco selection events
+- Command execution (table ops, formatting toggles, frontmatter)
+- CodeLens, hover providers, completion providers
+- Multi-cursor editing inside decorated ranges
+- Track changes recording (paste, undo/redo)
+- Claude Code terminal dispatch
+- Performance validation (<16ms decoration swap)
+
+### Automated Tests
 - Unit tests for: CriticMarkup parser, table parser/serializer,
   frontmatter parser (both delimiter formats), diff-to-CriticMarkup conversion
 - Integration tests for: decoration rendering, expand-on-cursor transitions,
