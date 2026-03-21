@@ -1,0 +1,6 @@
+{
+  "command": "node",
+  "args": ["preview/serve.js", "8271"],
+  "port": 8271,
+  "readyPattern": "Preview server running"
+}
