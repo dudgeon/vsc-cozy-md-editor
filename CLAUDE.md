@@ -107,7 +107,24 @@ src/
   (one frame) on a 500-line document with 50+ decorated elements
 - Run: `npm test`
 
+## Skills
+The `skills/` directory contains Claude Code skills for this project:
+- `skills/skill-creator/` — Meta-skill for creating, evaluating, and iterating
+  on new skills. Use this to build project-specific skills (e.g., build/test
+  automation, extension packaging, CriticMarkup validation).
+
+### Build & Test Skill (TODO)
+Create a dedicated skill using skill-creator that automates the build/test
+workflow for this extension:
+- Run `npm run build` and parse esbuild output for errors
+- Run `npm run lint` and surface ESLint violations
+- Run `npm test` (unit tests) and `npm run test:integration` (VS Code tests)
+- Package as .vsix and validate the package contents
+- Provide a single `/build` slash command that runs the full pipeline
+- Report pass/fail status with actionable error summaries
+
 ## Phased Roadmap
+Phase 0: Build & test skill (use skill-creator to create a /build skill)
 Phase 1: Markdown Polish + Toolbar + Tables (foundation editing UX)
 Phase 2: CriticMarkup Display (read/render track changes)
 Phase 3: Track Changes Recording + Comments + Simple Claude dispatch
