@@ -1,9 +1,37 @@
-# Markdown Craft — VS Code Extension
+# Cozy MD Editor — VS Code Extension
 
 ## What This Is
-A VS Code extension for knowledge work in markdown. It layers editorial chrome
-(toolbar, table ops, frontmatter management), CriticMarkup-based track changes,
-and Claude Code integration on top of the native Monaco text editor.
+A VS Code extension that makes markdown feel like a real writing environment.
+It layers editorial chrome (toolbar, table ops, frontmatter management),
+CriticMarkup-based track changes, and Claude Code integration on top of the
+native Monaco text editor — so writers never leave VS Code but never feel like
+they're "coding" either.
+
+## Who This Is For
+Product managers (and similar non-developer knowledge workers) who are brand new
+to VS Code, markdown, and Claude Code — all at once. Every UX decision should
+assume the user has never seen a markdown file before and doesn't know what a
+terminal is. Power-user features are fine, but the defaults must be
+approachable.
+
+## Collaboration Model
+Track changes supports three modes, all stored as CriticMarkup in the file:
+- **Solo editing** — one author reviewing their own drafts
+- **Me + Claude** — Claude as a co-editor, changes attributed to "Claude"
+- **Multi-author** — multiple human editors with author attribution
+
+Claude's edits can appear either as CriticMarkup tracked changes (for review)
+or as direct edits, toggled by the user via a setting / command. The default
+is tracked, so nothing surprises a new user.
+
+## Google Docs Sync — Current Scope
+Google Docs round-trip is a key long-term differentiator, but the sync CLI
+(`gws-cli`) is blocked. Current policy:
+- **Do now (no-regrets):** Store the Google Doc URL in frontmatter so the
+  pairing is always captured. Build the "Open in Docs" CodeLens. Use code-fence
+  frontmatter delimiters (not `---`) so docs survive a Docs round-trip.
+- **Defer:** Programmatic sync, three-way merge, status-bar indicators.
+  These can wait until gws-cli unblocks.
 
 ## Build & Run
 - `npm install` — install dependencies
@@ -130,4 +158,5 @@ Phase 2: CriticMarkup Display (read/render track changes)
 Phase 3: Track Changes Recording + Comments + Simple Claude dispatch
 Phase 4: Claude as Collaborator (context buffer, rewrite, file watcher)
 Phase 5: Agentic Workflows (@claude annotations, conflict resolution)
-Phase 6: Google Workspace Sync (manual then programmatic)
+Phase 6: Google Workspace Sync — gated on gws-cli availability
+         (no-regrets items like frontmatter URL pairing can land any time)
