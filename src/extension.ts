@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
 export function activate(context: vscode.ExtensionContext): void {
-    console.log('Markdown Craft is now active');
+    console.log('Cozy MD Editor is now active');
 
     // Phase 1: Register decoration manager
     // Phase 1: Register commands (tables, frontmatter, formatting)

@@ -1,7 +1,7 @@
 {
-  "name": "markdown-craft",
-  "displayName": "Markdown Craft",
-  "description": "A comprehensive VS Code extension for markdown editing with CriticMarkup track changes.",
+  "name": "cozy-md-editor",
+  "displayName": "Cozy MD Editor",
+  "description": "A friendly VS Code extension for markdown editing with CriticMarkup track changes and Claude Code integration.",
   "version": "0.1.0",
   "publisher": "dudgeon",
   "engines": {
@@ -50,221 +50,221 @@
   "contributes": {
     "commands": [
       {
-        "command": "markdownCraft.saveIndicator",
+        "command": "cozyMd.saveIndicator",
         "title": "Save Indicator",
-        "category": "Markdown Craft"
+        "category": "Cozy MD"
       },
       {
-        "command": "markdownCraft.togglePreview",
+        "command": "cozyMd.togglePreview",
         "title": "Toggle Preview",
-        "category": "Markdown Craft"
+        "category": "Cozy MD"
       },
       {
-        "command": "markdownCraft.insertFrontmatter",
+        "command": "cozyMd.insertFrontmatter",
         "title": "Insert Frontmatter",
-        "category": "Markdown Craft"
+        "category": "Cozy MD"
       },
       {
-        "command": "markdownCraft.tableMenu",
+        "command": "cozyMd.tableMenu",
         "title": "Table Menu",
-        "category": "Markdown Craft"
+        "category": "Cozy MD"
       },
       {
-        "command": "markdownCraft.insertBlock",
+        "command": "cozyMd.insertBlock",
         "title": "Insert Block",
-        "category": "Markdown Craft"
+        "category": "Cozy MD"
       },
       {
-        "command": "markdownCraft.toggleTrackChanges",
+        "command": "cozyMd.toggleTrackChanges",
         "title": "Toggle Track Changes",
-        "category": "Markdown Craft"
+        "category": "Cozy MD"
       },
       {
-        "command": "markdownCraft.addComment",
+        "command": "cozyMd.addComment",
         "title": "Add Comment",
-        "category": "Markdown Craft"
+        "category": "Cozy MD"
       },
       {
-        "command": "markdownCraft.acceptChange",
+        "command": "cozyMd.acceptChange",
         "title": "Accept Change",
-        "category": "Markdown Craft"
+        "category": "Cozy MD"
       },
       {
-        "command": "markdownCraft.rejectChange",
+        "command": "cozyMd.rejectChange",
         "title": "Reject Change",
-        "category": "Markdown Craft"
+        "category": "Cozy MD"
       },
       {
-        "command": "markdownCraft.acceptAllChanges",
+        "command": "cozyMd.acceptAllChanges",
         "title": "Accept All Changes",
-        "category": "Markdown Craft"
+        "category": "Cozy MD"
       },
       {
-        "command": "markdownCraft.rejectAllChanges",
+        "command": "cozyMd.rejectAllChanges",
         "title": "Reject All Changes",
-        "category": "Markdown Craft"
+        "category": "Cozy MD"
       },
       {
-        "command": "markdownCraft.nextChange",
+        "command": "cozyMd.nextChange",
         "title": "Next Change",
-        "category": "Markdown Craft"
+        "category": "Cozy MD"
       },
       {
-        "command": "markdownCraft.previousChange",
+        "command": "cozyMd.previousChange",
         "title": "Previous Change",
-        "category": "Markdown Craft"
+        "category": "Cozy MD"
       },
       {
-        "command": "markdownCraft.askClaudeAboutFile",
+        "command": "cozyMd.askClaudeAboutFile",
         "title": "Ask Claude About File",
-        "category": "Markdown Craft"
+        "category": "Cozy MD"
       },
       {
-        "command": "markdownCraft.askClaudeAboutSelection",
+        "command": "cozyMd.askClaudeAboutSelection",
         "title": "Ask Claude About Selection",
-        "category": "Markdown Craft"
+        "category": "Cozy MD"
       },
       {
-        "command": "markdownCraft.sendFileToClaudeContext",
+        "command": "cozyMd.sendFileToClaudeContext",
         "title": "Send File to Claude Context",
-        "category": "Markdown Craft"
+        "category": "Cozy MD"
       },
       {
-        "command": "markdownCraft.addToContextBuffer",
+        "command": "cozyMd.addToContextBuffer",
         "title": "Add to Context Buffer",
-        "category": "Markdown Craft"
+        "category": "Cozy MD"
       },
       {
-        "command": "markdownCraft.dispatchContextBuffer",
+        "command": "cozyMd.dispatchContextBuffer",
         "title": "Dispatch Context Buffer",
-        "category": "Markdown Craft"
+        "category": "Cozy MD"
       },
       {
-        "command": "markdownCraft.clearContextBuffer",
+        "command": "cozyMd.clearContextBuffer",
         "title": "Clear Context Buffer",
-        "category": "Markdown Craft"
+        "category": "Cozy MD"
       }
     ],
     "menus": {
       "editor/title": [
         {
-          "command": "markdownCraft.togglePreview",
+          "command": "cozyMd.togglePreview",
           "when": "resourceLangId == markdown",
           "group": "navigation"
         },
         {
-          "command": "markdownCraft.toggleTrackChanges",
+          "command": "cozyMd.toggleTrackChanges",
           "when": "resourceLangId == markdown",
           "group": "navigation"
         },
         {
-          "command": "markdownCraft.saveIndicator",
+          "command": "cozyMd.saveIndicator",
           "when": "resourceLangId == markdown",
           "group": "navigation"
         }
       ],
       "editor/context": [
         {
-          "command": "markdownCraft.tableMenu",
+          "command": "cozyMd.tableMenu",
           "when": "resourceLangId == markdown",
-          "group": "markdownCraft@1"
+          "group": "cozyMd@1"
         },
         {
-          "command": "markdownCraft.insertBlock",
+          "command": "cozyMd.insertBlock",
           "when": "resourceLangId == markdown",
-          "group": "markdownCraft@2"
+          "group": "cozyMd@2"
         },
         {
-          "command": "markdownCraft.addComment",
+          "command": "cozyMd.addComment",
           "when": "resourceLangId == markdown && editorHasSelection",
-          "group": "markdownCraft@3"
+          "group": "cozyMd@3"
         },
         {
-          "command": "markdownCraft.acceptChange",
+          "command": "cozyMd.acceptChange",
           "when": "resourceLangId == markdown",
-          "group": "markdownCraft@4"
+          "group": "cozyMd@4"
         },
         {
-          "command": "markdownCraft.rejectChange",
+          "command": "cozyMd.rejectChange",
           "when": "resourceLangId == markdown",
-          "group": "markdownCraft@5"
+          "group": "cozyMd@5"
         }
       ]
     },
     "configuration": {
-      "title": "Markdown Craft",
+      "title": "Cozy MD Editor",
       "properties": {
-        "markdownCraft.typography.fontFamily": {
+        "cozyMd.typography.fontFamily": {
           "type": "string",
           "default": "Inter",
           "description": "Font family for the markdown editor."
         },
-        "markdownCraft.typography.fontSize": {
+        "cozyMd.typography.fontSize": {
           "type": "number",
           "default": 16,
           "description": "Font size for the markdown editor."
         },
-        "markdownCraft.typography.lineHeight": {
+        "cozyMd.typography.lineHeight": {
           "type": "number",
           "default": 1.6,
           "description": "Line height for the markdown editor."
         },
-        "markdownCraft.polish.dimSyntaxMarkers": {
+        "cozyMd.polish.dimSyntaxMarkers": {
           "type": "boolean",
           "default": true,
           "description": "Dim markdown syntax markers for a cleaner editing experience."
         },
-        "markdownCraft.polish.styleHeadings": {
+        "cozyMd.polish.styleHeadings": {
           "type": "boolean",
           "default": true,
           "description": "Apply visual styling to headings."
         },
-        "markdownCraft.polish.dimFrontmatter": {
+        "cozyMd.polish.dimFrontmatter": {
           "type": "boolean",
           "default": true,
           "description": "Dim frontmatter blocks for reduced visual noise."
         },
-        "markdownCraft.tables.autoAlignOnSave": {
+        "cozyMd.tables.autoAlignOnSave": {
           "type": "boolean",
           "default": true,
           "description": "Automatically align table columns on save."
         },
-        "markdownCraft.tables.defaultColumns": {
+        "cozyMd.tables.defaultColumns": {
           "type": "number",
           "default": 3,
           "description": "Default number of columns when inserting a new table."
         },
-        "markdownCraft.tables.defaultRows": {
+        "cozyMd.tables.defaultRows": {
           "type": "number",
           "default": 3,
           "description": "Default number of rows when inserting a new table."
         },
-        "markdownCraft.criticmarkup.additionColor": {
+        "cozyMd.criticmarkup.additionColor": {
           "type": "string",
           "default": "rgba(0, 128, 0, 0.3)",
           "description": "Background color for CriticMarkup additions."
         },
-        "markdownCraft.criticmarkup.deletionColor": {
+        "cozyMd.criticmarkup.deletionColor": {
           "type": "string",
           "default": "rgba(255, 0, 0, 0.3)",
           "description": "Background color for CriticMarkup deletions."
         },
-        "markdownCraft.criticmarkup.highlightColor": {
+        "cozyMd.criticmarkup.highlightColor": {
           "type": "string",
           "default": "rgba(255, 255, 0, 0.3)",
           "description": "Background color for CriticMarkup highlights."
         },
-        "markdownCraft.criticmarkup.commentGutterIcon": {
+        "cozyMd.criticmarkup.commentGutterIcon": {
           "type": "string",
           "default": "comment",
           "description": "Gutter icon to use for CriticMarkup comments."
         },
-        "markdownCraft.trackChanges.authorName": {
+        "cozyMd.trackChanges.authorName": {
           "type": "string",
           "default": "Author",
           "description": "Author name used when tracking changes."
         },
-        "markdownCraft.frontmatter.delimiter": {
+        "cozyMd.frontmatter.delimiter": {
           "type": "string",
           "enum": [
             "codefence",
@@ -273,27 +273,27 @@
           "default": "codefence",
           "description": "Delimiter style for frontmatter blocks."
         },
-        "markdownCraft.claude.enabled": {
+        "cozyMd.claude.enabled": {
           "type": "boolean",
           "default": true,
           "description": "Enable Claude AI integration."
         },
-        "markdownCraft.claude.terminalName": {
+        "cozyMd.claude.terminalName": {
           "type": "string",
           "default": "Claude",
           "description": "Name of the terminal used for Claude interactions."
         },
-        "markdownCraft.claude.watchForExternalChanges": {
+        "cozyMd.claude.watchForExternalChanges": {
           "type": "boolean",
           "default": true,
           "description": "Watch for external file changes made by Claude."
         },
-        "markdownCraft.google.showSyncStatus": {
+        "cozyMd.google.showSyncStatus": {
           "type": "boolean",
           "default": false,
           "description": "Show Google Docs sync status in the editor."
         },
-        "markdownCraft.google.showOpenInDocsCodeLens": {
+        "cozyMd.google.showOpenInDocsCodeLens": {
           "type": "boolean",
           "default": false,
           "description": "Show a CodeLens to open the file in Google Docs."
@@ -302,55 +302,55 @@
     },
     "keybindings": [
       {
-        "command": "markdownCraft.togglePreview",
+        "command": "cozyMd.togglePreview",
         "key": "ctrl+shift+m",
         "mac": "cmd+shift+m",
         "when": "resourceLangId == markdown"
       },
       {
-        "command": "markdownCraft.toggleTrackChanges",
+        "command": "cozyMd.toggleTrackChanges",
         "key": "ctrl+shift+t",
         "mac": "cmd+shift+t",
         "when": "resourceLangId == markdown"
       },
       {
-        "command": "markdownCraft.addComment",
+        "command": "cozyMd.addComment",
         "key": "ctrl+alt+c",
         "mac": "cmd+alt+c",
         "when": "resourceLangId == markdown && editorHasSelection"
       },
       {
-        "command": "markdownCraft.insertFrontmatter",
+        "command": "cozyMd.insertFrontmatter",
         "key": "ctrl+alt+f",
         "mac": "cmd+alt+f",
         "when": "resourceLangId == markdown"
       },
       {
-        "command": "markdownCraft.tableMenu",
+        "command": "cozyMd.tableMenu",
         "key": "ctrl+alt+t",
         "mac": "cmd+alt+t",
         "when": "resourceLangId == markdown"
       },
       {
-        "command": "markdownCraft.nextChange",
+        "command": "cozyMd.nextChange",
         "key": "ctrl+]",
         "mac": "cmd+]",
         "when": "resourceLangId == markdown"
       },
       {
-        "command": "markdownCraft.previousChange",
+        "command": "cozyMd.previousChange",
         "key": "ctrl+[",
         "mac": "cmd+[",
         "when": "resourceLangId == markdown"
       },
       {
-        "command": "markdownCraft.acceptChange",
+        "command": "cozyMd.acceptChange",
         "key": "ctrl+alt+a",
         "mac": "cmd+alt+a",
         "when": "resourceLangId == markdown"
       },
       {
-        "command": "markdownCraft.rejectChange",
+        "command": "cozyMd.rejectChange",
         "key": "ctrl+alt+r",
         "mac": "cmd+alt+r",
         "when": "resourceLangId == markdown"
