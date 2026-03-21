@@ -7,16 +7,20 @@ and Claude Code integration on top of the native Monaco text editor.
 
 ## Build & Run
 - `npm install` — install dependencies
-- `npm run build` — production build via esbuild
-- `npm run watch` — development build with watch mode
+- `npm run build` — desktop build via esbuild (Node.js / platform: node)
+- `npm run build:web` — browser build via esbuild (platform: browser)
+- `npm run watch` — desktop build with watch mode
+- `npm run watch:web` — browser build with watch mode
+- `npm run preview:web` — build + launch browser VS Code with extension loaded
 - `npm run lint` — run ESLint
 - `npm run test` — run unit tests
 - `npm run test:integration` — run VS Code integration tests
 - `npm run package` — package as .vsix for distribution
-- Press F5 in VS Code to launch Extension Development Host
+- Press F5 in VS Code → "Run Extension" for desktop, "Run Web Extension" for browser
 
 ## Technical Decisions
 - TypeScript, esbuild bundler, VS Code Extension API
+- Dual-target build: desktop (Node.js) + browser (vscode.dev / cowork preview)
 - All features operate on the NATIVE text editor — no custom webview editors
 - CriticMarkup is the storage format for all track changes and comments
 - Frontmatter uses code fence delimiters (```), NOT triple-dash (---)
@@ -97,6 +101,8 @@ src/
 - Table operations must preserve column alignment markers
 - Google Docs pairing is stored in frontmatter fields, not external config
 - Google sync features must degrade gracefully when CLI is unavailable
+- Extension core must stay browser-compatible (no Node.js APIs in src/ outside
+  test/). Node-only features (Claude terminal, file watcher) degrade in web.
 
 ## Testing
 - Unit tests for: CriticMarkup parser, table parser/serializer,
@@ -125,8 +131,8 @@ workflow for this extension:
 
 ## Phased Roadmap
 Phase 0: Build & test skill (use skill-creator to create a /build skill)
-Phase 1: Markdown Polish + Toolbar + Tables (foundation editing UX)
-Phase 1b: Browser Preview (web extension build so extension runs in vscode.dev / cowork browser for feedback)
+Phase 1: Markdown Polish + Toolbar + Tables (foundation editing UX) ✓
+Phase 1b: Browser Preview (web extension build so extension runs in vscode.dev / cowork browser for feedback) ✓
 Phase 2: CriticMarkup Display (read/render track changes)
 Phase 3: Track Changes Recording + Comments + Simple Claude dispatch
 Phase 4: Claude as Collaborator (context buffer, rewrite, file watcher)
