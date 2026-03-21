@@ -24,6 +24,17 @@
         },
         {
             "type": "npm",
+            "script": "watch:web",
+            "problemMatcher": "$esbuild-watch",
+            "isBackground": true,
+            "presentation": {
+                "reveal": "never"
+            },
+            "group": "build",
+            "label": "npm: watch:web"
+        },
+        {
+            "type": "npm",
             "script": "lint",
             "problemMatcher": "$eslint-stylish",
             "label": "npm: lint"

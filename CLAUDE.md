@@ -126,6 +126,7 @@ workflow for this extension:
 ## Phased Roadmap
 Phase 0: Build & test skill (use skill-creator to create a /build skill)
 Phase 1: Markdown Polish + Toolbar + Tables (foundation editing UX)
+Phase 1b: Browser Preview (web extension build so extension runs in vscode.dev / cowork browser for feedback)
 Phase 2: CriticMarkup Display (read/render track changes)
 Phase 3: Track Changes Recording + Comments + Simple Claude dispatch
 Phase 4: Claude as Collaborator (context buffer, rewrite, file watcher)
