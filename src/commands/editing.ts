@@ -299,6 +299,13 @@ function createNewRowAndNavigate(
 // Enter key handler
 // ────────────────────────────────────────────
 
+// Mixed list nesting note: Each list type (task, bullet, ordered) is detected
+// by matching the CURRENT line's marker via regex. The handler never inspects
+// parent lines, so mixed nesting (e.g. ordered item under bullet parent, or
+// vice versa) works correctly — the continuation always preserves the current
+// line's own marker type, and Tab indent/outdent only adjusts leading
+// whitespace without altering the marker.
+
 async function onEnterKey(editor: vscode.TextEditor): Promise<void> {
     const doc = editor.document;
     const sel = editor.selection;
@@ -308,9 +315,9 @@ async function onEnterKey(editor: vscode.TextEditor): Promise<void> {
     // --- Task list continuation ---
     const taskEmptyMatch = lineText.match(TASK_EMPTY_RE);
     if (taskEmptyMatch) {
-        // Empty task item — remove the marker and insert blank line
+        // Empty task item — remove the entire marker line (including indent)
         await editor.edit(editBuilder => {
-            editBuilder.replace(line.range, taskEmptyMatch[1]); // keep only indent (which becomes blank-ish)
+            editBuilder.replace(line.range, '');
         });
         return;
     }
@@ -332,9 +339,9 @@ async function onEnterKey(editor: vscode.TextEditor): Promise<void> {
     // --- Bullet list continuation ---
     const bulletEmptyMatch = lineText.match(BULLET_EMPTY_RE);
     if (bulletEmptyMatch) {
-        // Empty bullet — remove the marker, leave blank line
+        // Empty bullet — remove the entire marker line (including indent)
         await editor.edit(editBuilder => {
-            editBuilder.replace(line.range, bulletEmptyMatch[1]);
+            editBuilder.replace(line.range, '');
         });
         return;
     }
@@ -356,9 +363,9 @@ async function onEnterKey(editor: vscode.TextEditor): Promise<void> {
     // --- Ordered list continuation ---
     const orderedEmptyMatch = lineText.match(ORDERED_EMPTY_RE);
     if (orderedEmptyMatch) {
-        // Empty ordered item — remove the marker
+        // Empty ordered item — remove the entire marker line (including indent)
         await editor.edit(editBuilder => {
-            editBuilder.replace(line.range, orderedEmptyMatch[1]);
+            editBuilder.replace(line.range, '');
         });
         return;
     }
@@ -437,6 +444,122 @@ async function onTabKey(editor: vscode.TextEditor): Promise<void> {
 }
 
 // ────────────────────────────────────────────
+// Parent list type detection for outdent marker conversion
+// ────────────────────────────────────────────
+
+/**
+ * Scan upward from `lineIndex - 1` to find the nearest list item at the
+ * given `targetIndent` level.  Returns information about that item's marker
+ * so the outdented line can inherit the correct list type.
+ *
+ * Stops scanning when it hits a blank line (list boundary) or the start of
+ * the document.
+ */
+function findParentListType(
+    document: vscode.TextDocument,
+    lineIndex: number,
+    targetIndent: number,
+): { type: 'bullet'; marker: string }
+ | { type: 'ordered'; nextNumber: number }
+ | { type: 'task' }
+ | null {
+    for (let i = lineIndex - 1; i >= 0; i--) {
+        const text = document.lineAt(i).text;
+
+        // Stop at blank lines — they signal a list boundary
+        if (text.trim() === '') {
+            return null;
+        }
+
+        // Measure this line's indent (number of leading spaces)
+        const lineIndent = text.length - text.trimStart().length;
+
+        // We only care about lines at exactly the target indent level
+        if (lineIndent !== targetIndent) {
+            continue;
+        }
+
+        // Check task list first (it's a specialisation of bullet)
+        const taskMatch = text.match(TASK_RE);
+        if (taskMatch && taskMatch[1].length === targetIndent) {
+            return { type: 'task' };
+        }
+
+        // Ordered list
+        const orderedMatch = text.match(ORDERED_RE);
+        if (orderedMatch && orderedMatch[1].length === targetIndent) {
+            const num = parseInt(orderedMatch[2], 10);
+            return { type: 'ordered', nextNumber: num + 1 };
+        }
+
+        // Bullet list
+        const bulletMatch = text.match(BULLET_RE);
+        if (bulletMatch && bulletMatch[1].length === targetIndent) {
+            return { type: 'bullet', marker: bulletMatch[2] };
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Replace the list marker on a single line to match the parent list type.
+ *
+ * `lineIndex` must refer to a line that is already a list item (matches
+ * ANY_LIST_RE) at its new indent level.  The function computes the
+ * replacement text and appends the replacement to `replacements` (an array
+ * of {range, text} pairs) so the caller can apply them in a single
+ * `editor.edit` pass.
+ */
+function buildMarkerReplacement(
+    document: vscode.TextDocument,
+    lineIndex: number,
+    parentInfo: { type: 'bullet'; marker: string } | { type: 'ordered'; nextNumber: number } | { type: 'task' },
+): { range: vscode.Range; text: string } | null {
+    const text = document.lineAt(lineIndex).text;
+    const indent = text.length - text.trimStart().length;
+    const indentStr = text.substring(0, indent);
+
+    // Detect the current marker + content on this line
+    const taskMatch = text.match(TASK_RE);
+    const orderedMatch = text.match(ORDERED_RE);
+    const bulletMatch = text.match(BULLET_RE);
+
+    let content: string;
+
+    if (taskMatch) {
+        content = taskMatch[3];
+    } else if (orderedMatch) {
+        content = orderedMatch[3];
+    } else if (bulletMatch) {
+        content = bulletMatch[3];
+    } else {
+        return null; // not a list line — shouldn't happen
+    }
+
+    // Build the new marker text (does NOT include leading indent — that's
+    // already correct after the outdent edit removed whitespace)
+    let newMarker: string;
+    switch (parentInfo.type) {
+        case 'ordered':
+            newMarker = `${parentInfo.nextNumber}. `;
+            break;
+        case 'bullet':
+            newMarker = `${parentInfo.marker} `;
+            break;
+        case 'task':
+            newMarker = '- [ ] ';
+            break;
+    }
+
+    // Build full replacement line (indent + newMarker + content)
+    const newLine = `${indentStr}${newMarker}${content}`;
+    const fullRange = document.lineAt(lineIndex).range;
+
+    return { range: fullRange, text: newLine };
+}
+
+// ────────────────────────────────────────────
 // Shift+Tab key handler (unified: table nav > list outdent > default)
 // ────────────────────────────────────────────
 
@@ -452,20 +575,79 @@ async function onShiftTabKey(editor: vscode.TextEditor): Promise<void> {
         }
     }
 
-    // 2. List outdent
+    // 2. List outdent with marker conversion
     if (ANY_LIST_RE.test(lineText)) {
+        // Compute the outdent + marker conversion in a single edit pass.
+        // We pre-compute what each line will look like after outdent, then
+        // scan for the parent list type against those projected values.
+        const startLine = sel.start.line;
+        const endLine = sel.end.line;
+
+        // First, compute projected lines (what they'll look like after outdent)
+        const projectedLines: { lineIndex: number; newText: string; spacesRemoved: number }[] = [];
+        for (let i = startLine; i <= endLine; i++) {
+            const text = doc.lineAt(i).text;
+            const spacesToRemove = text.startsWith('  ') ? 2 : (text.startsWith(' ') ? 1 : 0);
+            projectedLines.push({
+                lineIndex: i,
+                newText: text.substring(spacesToRemove),
+                spacesRemoved: spacesToRemove,
+            });
+        }
+
         await editor.edit(editBuilder => {
-            const startLine = sel.start.line;
-            const endLine = sel.end.line;
-            for (let i = startLine; i <= endLine; i++) {
-                const text = doc.lineAt(i).text;
-                // Remove up to 2 leading spaces
-                const spacesToRemove = text.startsWith('  ') ? 2 : (text.startsWith(' ') ? 1 : 0);
-                if (spacesToRemove > 0) {
-                    editBuilder.delete(new vscode.Range(i, 0, i, spacesToRemove));
+            for (const proj of projectedLines) {
+                if (proj.spacesRemoved === 0 && !ANY_LIST_RE.test(proj.newText)) {
+                    continue;
                 }
+
+                const newIndent = proj.newText.length - proj.newText.trimStart().length;
+                const parentInfo = findParentListType(doc, proj.lineIndex, newIndent);
+
+                let finalText = proj.newText;
+                if (parentInfo) {
+                    // Build the converted line with parent's marker type
+                    const indentStr = proj.newText.substring(0, newIndent);
+                    const trimmed = proj.newText.trimStart();
+
+                    // Extract content after the current marker
+                    let content = '';
+                    const taskMatch = trimmed.match(/^- \[[ x]\]\s(.*)$/);
+                    const orderedMatch = trimmed.match(/^(\d+)\.\s(.*)$/);
+                    const bulletMatch = trimmed.match(/^([-*])\s(.*)$/);
+
+                    if (taskMatch) {
+                        content = taskMatch[1];
+                    } else if (orderedMatch) {
+                        content = orderedMatch[2];
+                    } else if (bulletMatch) {
+                        content = bulletMatch[2];
+                    }
+
+                    let newMarker: string;
+                    switch (parentInfo.type) {
+                        case 'ordered':
+                            newMarker = `${parentInfo.nextNumber}. `;
+                            break;
+                        case 'bullet':
+                            newMarker = `${parentInfo.marker} `;
+                            break;
+                        case 'task':
+                            newMarker = '- [ ] ';
+                            break;
+                    }
+
+                    finalText = `${indentStr}${newMarker}${content}`;
+                }
+
+                editBuilder.replace(doc.lineAt(proj.lineIndex).range, finalText);
             }
         });
+
+        // TODO: Renumber subsequent ordered list items after the inserted
+        // line(s) so that e.g. the old "3. Third item" becomes "4." when a
+        // new item is inserted above it at the same indent level.
+
         return;
     }
 

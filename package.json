@@ -489,7 +489,28 @@
       "[markdown]": {
         "editor.fontFamily": "Inter",
         "editor.fontSize": 16,
-        "editor.lineHeight": 1.6
+        "editor.lineHeight": 1.6,
+        "editor.lineNumbers": "on"
+      },
+      "workbench.colorCustomizations": {
+        "[Default Dark Modern]": {
+          "editorLineNumber.foreground": "#88888825"
+        },
+        "[Default Dark+]": {
+          "editorLineNumber.foreground": "#88888825"
+        },
+        "[Default Light Modern]": {
+          "editorLineNumber.foreground": "#cccccc50"
+        },
+        "[Default Light+]": {
+          "editorLineNumber.foreground": "#cccccc50"
+        },
+        "[Default High Contrast]": {
+          "editorLineNumber.foreground": "#888888"
+        },
+        "[Default High Contrast Light]": {
+          "editorLineNumber.foreground": "#aaaaaa"
+        }
       }
     }
   }

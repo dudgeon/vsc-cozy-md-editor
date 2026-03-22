@@ -186,8 +186,9 @@ The `skills/` directory contains Claude Code skills for this project:
 - **Table auto-format**: tables auto-align columns on save (respects `autoAlignOnSave` setting)
 - Remaining stubs: comments, track-changes, Claude dispatch, providers, sidebar, google sync
 - **Blockquote decoration**: `> ` markers hidden, left border + italic via CSS injection
-- **Expand-on-cursor**: narrowed to exact range (not full line) — cursor must be
-  within or adjacent to the decorated span for markers to reveal
+- **Expand-on-cursor**: narrowed to exact range (not full line), with paired
+  marker grouping — opening and closing markers (bold, italic, code, links)
+  reveal/hide together via `groupId` on `DecoratedRegion`
 - F5 should show: hidden syntax markers with expand-on-cursor, sized headings,
   underlined links, inline code with background, blockquote left-border, table
   CodeLens toolbar, Enter/Tab editing behaviors
@@ -226,6 +227,97 @@ The `skills/` directory contains Claude Code skills for this project:
     purely a visual/decoration concern. Investigate what common editors do
     (Typora uses a/i alternation). Default to the most common convention;
     add a config option for numbering style to the backlog. Slot: Phase 6.
+
+### Known Issues (from fifth F5 validation, 2026-03-21)
+
+19. **Line numbers still too prominent**
+    Current `#bbbbbb40` is better but user wants inactive lines even dimmer.
+    Try `#88888820` or lower alpha. Quick config tweak. Slot: now.
+
+20. **Outdent should inherit parent list type**
+    When outdenting a bullet sub-item back to a level that was ordered,
+    the item should convert to the parent's list type (numbered), not
+    preserve its own bullet. Example:
+    ```
+    1. number
+      - bullet    ← Shift+Tab here should become `2. bullet-text`
+    ```
+    Fix: after removing indent, scan preceding lines at the new indent
+    level to find the parent list type, convert marker, auto-number.
+    File: `editing.ts`. Slot: Phase 1.9.
+
+### Known Issues (from seventh F5 validation, 2026-03-21)
+
+22. **Outdent list type inheritance — corner cases**
+    Core behavior works (bullet under ordered → converts to numbered on
+    Shift+Tab). Corner cases to fix later:
+    - Renumber subsequent items when a new numbered item is inserted mid-list
+    - Handle deeply nested mixed lists (3+ levels)
+    - Outdenting a task list item under a bullet parent
+    Slot: Phase 6 (polish) or as encountered.
+
+### Known Issues (from sixth F5 validation, 2026-03-21)
+
+21. **Blockquote CSS injection renders as pipe characters**
+    UPDATED: the `|` characters on line 78 are NOT from markdown — they are
+    the `border-left` CSS injection on the blockquote content provider
+    rendering as literal pipe glyphs instead of a CSS border. The
+    `textDecoration` hack does not support `border-left` or `padding-left`.
+    Fix: remove the `border-left` CSS injection entirely. Use only
+    `fontStyle: 'italic'` + a subtle `backgroundColor` tint as the
+    blockquote visual treatment. The border-left approach is not viable
+    via `textDecoration` injection in VS Code.
+    Previously:
+    The `> ` marker is hidden via `color: transparent` + `letterSpacing: '-1em'`.
+    This works for short markers, but when a blockquote line soft-wraps in the
+    viewport, the hidden characters create a visible gap/column offset between
+    the first wrapped segment and subsequent segments. The text appears split
+    into two misaligned columns. Root cause: `letterSpacing: '-1em'` collapses
+    character width but VS Code's line wrapping still accounts for the original
+    character positions. Fix options:
+    a) Don't hide `> ` markers — instead dim them (opacity) like frontmatter.
+       Less clean but avoids the wrapping artifact entirely. **Recommended.**
+    b) Investigate `textDecoration` CSS injection for `font-size: 0` on the
+       marker characters instead of letterSpacing.
+    c) Accept the artifact and only hide markers on short (non-wrapping) lines.
+    Slot: fix now (quick change in markdown-polish.ts blockquote provider).
+
+### Known Issues (from fourth F5 validation, 2026-03-21)
+
+15. **Bold markers never reveal in some contexts (REGRESSION)**
+    Example: `1. **Ingestion** — vali` — the `**` markers do not show at all
+    even with the cursor directly on the bold word. Likely cause: the
+    expand-on-cursor range check is too narrow after the Phase 1.7 adjacency
+    fix. The 1-char adjacency buffer may not be enough, or the cursor-contains
+    check fails when the cursor is on the content between markers (the content
+    range is not a decorated region — only the marker ranges are). Fix: the
+    `isCursorNearRegion` check needs to expand markers when the cursor is
+    anywhere inside the FULL SPAN (opening marker through closing marker),
+    not just within/adjacent to the marker characters themselves. This means
+    the `groupId` approach should also store the full span range and use that
+    for proximity, not the individual marker ranges. Slot: Phase 1.8.
+
+16. **Inline style markers only reveal near span boundaries**
+    Related to #15. Even when markers do reveal, it only works when the cursor
+    is near the opening or closing marker characters — not when it's in the
+    middle of the styled text. E.g., cursor in the middle of "bold text" in
+    `**bold text**` does not reveal the `**`. Same root cause as #15: the
+    proximity check uses the marker range, not the full span range. The
+    grouped expansion via `groupId` fixed leading/trailing symmetry but
+    didn't fix the "cursor in content" case. Slot: Phase 1.8.
+
+17. **Mixed ordered/unordered sublists**
+    Ordered lists with unordered sub-bullets (or vice versa) should be
+    supported. E.g., `1.` item with `- ` sub-bullets. The Enter continuation
+    and Tab indent should handle mixed nesting naturally. Slot: Phase 1.8
+    (editing behaviors) or Phase 6 (if decoration-only).
+
+18. **Line numbers too prominent**
+    The editor line numbers have too much contrast / visual weight. Want them
+    dimmer so they don't compete with content. Fix: add a
+    `configurationDefaults` entry for `"editor.lineNumbers"` opacity or color,
+    or use `editorLineNumber.foreground` in a color customization. Slot:
+    Phase 6 (UX polish) — or could be a quick config change now.
 
 ### Known Issues (from second F5 validation, 2026-03-21)
 
@@ -279,13 +371,25 @@ Phase 0: Build & test skill — DONE
 Phase 1: Markdown Polish + Toolbar + Tables — DONE
 Phase 1.5: Decoration polish (first pass) — DONE
 Phase 1.6: Editing behaviors + decoration refinements — DONE
-Phase 1.7: Paired marker expansion + table CodeLens scoping — NEXT
+Phase 1.7: Paired marker expansion + table CodeLens scoping — DONE
+Phase 1.8: Full-span cursor expansion fix + mixed list support — DONE
+Phase 1.9: Outdent list type inheritance — DONE (needs F5 validation)
 Phase 2: CriticMarkup Display (read/render track changes)
 Phase 3: Track Changes Recording + Comments + Simple Claude dispatch
 Phase 4: Claude as Collaborator (context buffer, rewrite, file watcher)
 Phase 5: Agentic Workflows (@claude annotations, conflict resolution)
-Phase 6: UX Polish (light/dark toggle, theme-awareness, nested list numbering,
-         table CodeLens styling, advanced table rendering)
+Phase 6: UX Polish
+         - Light/dark mode toggle button in editor title bar
+         - Theme-awareness across all decorations
+         - Nested list numbering + config
+         - Table CodeLens styling
+         - Advanced table rendering
+         - Rich text → markdown paste (convert clipboard HTML to markdown
+           on paste, e.g., paste from Google Docs/web and get clean markdown
+           instead of raw HTML)
+         - Research: Google Docs keyboard conventions to preserve (Cmd+K for
+           link is already matched — audit other shortcuts like Cmd+Shift+7
+           for numbered list, Cmd+Shift+8 for bullets, etc.)
 Phase 7: Google Workspace Sync — gated on gws-cli availability
          (no-regrets items like frontmatter URL pairing can land any time)
 
@@ -345,6 +449,26 @@ Quick fixes from third F5 validation:
    active editor's cursor position. File: `codelens.ts`.
 3. **Table CodeLens styling** — future polish pass on button appearance
    (icons, separators, compact layout). Add to Phase 6 backlog.
+
+### Phase 1.8 Scope — Full-Span Expansion + Mixed Lists
+Fix the core expand-on-cursor issue and add mixed list support:
+1. **Full-span expansion** — the fundamental problem: marker regions are
+   checked for cursor proximity individually, but the cursor can be in the
+   CONTENT between markers (which is not a decorated region). Fix approach:
+   add an optional `spanRange` to `DecoratedRegion` that covers the full
+   styled span (opening marker through closing marker, inclusive). The
+   `isCursorNearRegion` check should use `spanRange` (if present) for
+   proximity instead of the marker's own `range`. This way, cursor anywhere
+   in `**bold text**` expands both `**` markers. Files: `manager.ts`
+   (add `spanRange` to interface, use in proximity check) +
+   `markdown-polish.ts` (set `spanRange` on all paired marker regions).
+2. **Mixed ordered/unordered sublists** — Enter continuation and Tab indent
+   should handle: ordered list with unordered sub-bullets, unordered list
+   with ordered sub-items. The `onEnterKey` handler should detect the
+   current line's list type regardless of parent nesting. File: `editing.ts`.
+3. **Line number dimming** — add `editorLineNumber.foreground` color
+   customization to `configurationDefaults` in `package.json` to make line
+   numbers less prominent. Quick config-only change.
 
 ### Phase 2 Scope — CriticMarkup Display
 Wire the CriticMarkup parser into a decoration provider for visual track changes:

@@ -213,7 +213,7 @@ const CODE_BLOCK_CONTENT_EXPANDED: vscode.DecorationRenderOptions = {
  * transparent-color + negative-letter-spacing trick as other syntax markers.
  */
 const BLOCKQUOTE_MARKER_COLLAPSED: vscode.DecorationRenderOptions = {
-    ...HIDDEN_COLLAPSED,
+    opacity: '0.3',
 };
 
 const BLOCKQUOTE_MARKER_EXPANDED: vscode.DecorationRenderOptions = {
@@ -229,8 +229,10 @@ const BLOCKQUOTE_MARKER_EXPANDED: vscode.DecorationRenderOptions = {
  * fontStyle: 'italic' will definitely work as a fallback visual indicator.
  */
 const BLOCKQUOTE_CONTENT_COLLAPSED: vscode.DecorationRenderOptions = {
-    textDecoration: 'none; border-left: 3px solid rgba(128, 128, 128, 0.4); padding-left: 12px',
+    // border-left via textDecoration CSS injection does NOT work in VS Code —
+    // it renders as literal pipe characters. Using italic + subtle background instead.
     fontStyle: 'italic',
+    backgroundColor: 'rgba(128, 128, 128, 0.06)',
     isWholeLine: true,
 };
 
@@ -364,18 +366,27 @@ class BoldItalicMarkersProvider implements DecorationProvider {
 
             BOLD_ITALIC_RE.lastIndex = 0;
             let match: RegExpExecArray | null;
+            let matchIndex = 0;
 
             while ((match = BOLD_ITALIC_RE.exec(text)) !== null) {
                 const fullMatchStart = match.index;
                 const markerLen = match[1].length;
                 const contentLen = match[2].length;
+                const groupId = `bold-italic-${i}-${matchIndex}`;
+
+                // Full span from opening marker start through closing marker end.
+                const fullMatchEnd = fullMatchStart + markerLen + contentLen + markerLen;
+                const spanRange = new vscode.Range(
+                    i, fullMatchStart,
+                    i, fullMatchEnd,
+                );
 
                 // Opening marker
                 const openRange = new vscode.Range(
                     i, fullMatchStart,
                     i, fullMatchStart + markerLen,
                 );
-                regions.push(makeSimpleRegion(openRange));
+                regions.push(makeSimpleRegion(openRange, groupId, spanRange));
 
                 // Closing marker
                 const closeStart = fullMatchStart + markerLen + contentLen;
@@ -383,7 +394,9 @@ class BoldItalicMarkersProvider implements DecorationProvider {
                     i, closeStart,
                     i, closeStart + markerLen,
                 );
-                regions.push(makeSimpleRegion(closeRange));
+                regions.push(makeSimpleRegion(closeRange, groupId, spanRange));
+
+                matchIndex++;
             }
         }
 
@@ -431,18 +444,28 @@ class LinkMarkersProvider implements DecorationProvider {
 
             LINK_RE.lastIndex = 0;
             let match: RegExpExecArray | null;
+            let matchIndex = 0;
 
             while ((match = LINK_RE.exec(text)) !== null) {
                 const fullMatchStart = match.index;
                 const linkText = match[1];
                 const url = match[2];
+                const groupId = `link-${i}-${matchIndex}`;
+
+                // Full span from `[` through `)` — the entire [text](url) construct.
+                // Total length: 1 ([) + linkText + 2 (]() + url + 1 ())
+                const fullMatchEnd = fullMatchStart + 1 + linkText.length + 2 + url.length + 1;
+                const spanRange = new vscode.Range(
+                    i, fullMatchStart,
+                    i, fullMatchEnd,
+                );
 
                 // `[` — opening bracket
                 const openBracketRange = new vscode.Range(
                     i, fullMatchStart,
                     i, fullMatchStart + 1,
                 );
-                regions.push(makeSimpleRegion(openBracketRange));
+                regions.push(makeSimpleRegion(openBracketRange, groupId, spanRange));
 
                 // `](` — closing bracket + opening paren
                 const closeBracketStart = fullMatchStart + 1 + linkText.length;
@@ -450,7 +473,7 @@ class LinkMarkersProvider implements DecorationProvider {
                     i, closeBracketStart,
                     i, closeBracketStart + 2,
                 );
-                regions.push(makeSimpleRegion(closeBracketRange));
+                regions.push(makeSimpleRegion(closeBracketRange, groupId, spanRange));
 
                 // URL portion
                 const urlStart = closeBracketStart + 2;
@@ -458,7 +481,7 @@ class LinkMarkersProvider implements DecorationProvider {
                     i, urlStart,
                     i, urlStart + url.length,
                 );
-                regions.push(makeSimpleRegion(urlRange));
+                regions.push(makeSimpleRegion(urlRange, groupId, spanRange));
 
                 // `)` — closing paren
                 const closeParenPos = urlStart + url.length;
@@ -466,7 +489,9 @@ class LinkMarkersProvider implements DecorationProvider {
                     i, closeParenPos,
                     i, closeParenPos + 1,
                 );
-                regions.push(makeSimpleRegion(closeParenRange));
+                regions.push(makeSimpleRegion(closeParenRange, groupId, spanRange));
+
+                matchIndex++;
             }
         }
 
@@ -573,18 +598,27 @@ class InlineCodeMarkersProvider implements DecorationProvider {
 
             INLINE_CODE_RE.lastIndex = 0;
             let match: RegExpExecArray | null;
+            let matchIndex = 0;
 
             while ((match = INLINE_CODE_RE.exec(text)) !== null) {
                 const fullMatchStart = match.index;
                 const tickLen = match[1].length;
                 const contentLen = match[2].length;
+                const groupId = `inline-code-${i}-${matchIndex}`;
+
+                // Full span from opening backtick(s) through closing backtick(s).
+                const fullMatchEnd = fullMatchStart + tickLen + contentLen + tickLen;
+                const spanRange = new vscode.Range(
+                    i, fullMatchStart,
+                    i, fullMatchEnd,
+                );
 
                 // Opening backtick(s)
                 const openRange = new vscode.Range(
                     i, fullMatchStart,
                     i, fullMatchStart + tickLen,
                 );
-                regions.push(makeSimpleRegion(openRange));
+                regions.push(makeSimpleRegion(openRange, groupId, spanRange));
 
                 // Closing backtick(s)
                 const closeStart = fullMatchStart + tickLen + contentLen;
@@ -592,7 +626,9 @@ class InlineCodeMarkersProvider implements DecorationProvider {
                     i, closeStart,
                     i, closeStart + tickLen,
                 );
-                regions.push(makeSimpleRegion(closeRange));
+                regions.push(makeSimpleRegion(closeRange, groupId, spanRange));
+
+                matchIndex++;
             }
         }
 
@@ -897,13 +933,26 @@ class FrontmatterProvider implements DecorationProvider {
  * Create a simple region where collapsed and expanded decorations carry no
  * per-instance overrides — all styling comes from the base type registered
  * with the DecorationManager.
+ *
+ * @param groupId Optional group ID — when any region in a group expands, all do.
+ * @param spanRange Optional full-span range for cursor proximity checks.
+ *   When set, the cursor anywhere inside this range triggers expansion of
+ *   this region (and its group). The actual decoration is still applied to
+ *   `range` — `spanRange` only affects the "should this expand?" decision.
  */
-function makeSimpleRegion(range: vscode.Range): DecoratedRegion {
-    return {
+function makeSimpleRegion(range: vscode.Range, groupId?: string, spanRange?: vscode.Range): DecoratedRegion {
+    const region: DecoratedRegion = {
         range,
         collapsedDecoration: { range },
         expandedDecoration: { range },
     };
+    if (groupId !== undefined) {
+        region.groupId = groupId;
+    }
+    if (spanRange !== undefined) {
+        region.spanRange = spanRange;
+    }
+    return region;
 }
 
 /**

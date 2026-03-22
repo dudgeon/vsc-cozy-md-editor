@@ -11,6 +11,11 @@ export interface DecoratedRegion {
     collapsedDecoration: vscode.DecorationOptions;
     /** The expanded (full visibility) decoration to show when cursor is inside */
     expandedDecoration: vscode.DecorationOptions;
+    /** Optional group ID — when any region in a group expands, all do */
+    groupId?: string;
+    /** Full span range for proximity check — e.g., covers `**bold**` entirely.
+     *  When set, cursor anywhere in this range triggers expansion. */
+    spanRange?: vscode.Range;
 }
 
 /** A decoration provider registers regions with the manager */
@@ -257,12 +262,35 @@ export class DecorationManager implements vscode.Disposable {
                 continue;
             }
 
+            // --- Pass 1: check each region for direct cursor proximity and
+            // collect the set of group IDs that should be expanded. ---
+            const expandedGroupIds = new Set<string>();
+            const directlyExpanded = new Uint8Array(regionList.length);
+
+            for (let i = 0; i < regionList.length; i++) {
+                const region = regionList[i];
+                // Use spanRange (full construct) for proximity when available;
+                // fall back to the marker's own range otherwise.
+                const proximityRange = region.spanRange ?? region.range;
+                if (this.isCursorNearRegion(proximityRange, cursorLines, selections)) {
+                    directlyExpanded[i] = 1;
+                    if (region.groupId) {
+                        expandedGroupIds.add(region.groupId);
+                    }
+                }
+            }
+
+            // --- Pass 2: partition into collapsed/expanded, expanding any
+            // region whose groupId is in the expanded set. ---
             const collapsedOptions: vscode.DecorationOptions[] = [];
             const expandedOptions: vscode.DecorationOptions[] = [];
 
             for (let i = 0; i < regionList.length; i++) {
                 const region = regionList[i];
-                if (this.isCursorNearRegion(region.range, cursorLines, selections)) {
+                const isExpanded = directlyExpanded[i] === 1
+                    || (region.groupId !== undefined && expandedGroupIds.has(region.groupId));
+
+                if (isExpanded) {
                     expandedOptions.push(region.expandedDecoration);
                 } else {
                     collapsedOptions.push(region.collapsedDecoration);
