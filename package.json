@@ -76,7 +76,7 @@
       },
       {
         "command": "cozyMd.togglePreview",
-        "title": "Toggle Preview",
+        "title": "Preview",
         "category": "Cozy MD"
       },
       {
