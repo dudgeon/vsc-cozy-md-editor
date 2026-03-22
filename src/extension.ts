@@ -10,6 +10,7 @@ import { MarkdownCraftCodeLensProvider, registerTableCodeLensCommands } from './
 import { CriticMarkupDecorationProvider } from './decorations/criticmarkup';
 import { registerTrackChangesCommands } from './commands/track-changes';
 import { registerClaudeCommands } from './commands/claude';
+import { applyTypographyBundle } from './typography';
 
 let decorationManager: DecorationManager | undefined;
 
@@ -34,6 +35,16 @@ export function activate(context: vscode.ExtensionContext): void {
     if (vscode.window.activeTextEditor) {
         decorationManager.update();
     }
+
+    // Typography bundle: apply on activation and watch for changes
+    applyTypographyBundle();
+    context.subscriptions.push(
+        vscode.workspace.onDidChangeConfiguration(e => {
+            if (e.affectsConfiguration('cozyMd.typography.activeBundle')) {
+                applyTypographyBundle();
+            }
+        })
+    );
 
     // Phase 1: Table CodeLens (toolbar above tables)
     const codeLensProvider = new MarkdownCraftCodeLensProvider();

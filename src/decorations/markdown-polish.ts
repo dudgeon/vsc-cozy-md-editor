@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { DecorationProvider, DecoratedRegion, DecorationManager } from './manager';
+import { getActiveBundle } from '../typography';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -109,33 +110,47 @@ const HEADING_MARKER_EXPANDED: vscode.DecorationRenderOptions = {
 };
 
 /**
- * Heading text styles per level (collapsed).
+ * Build heading text styles per level (collapsed) from the active typography
+ * bundle.
  *
- * Uses the `textDecoration` CSS injection hack to set font-size. VS Code
- * passes the `textDecoration` value as raw CSS, so injecting after a
- * semicolon lets us set arbitrary CSS properties.
+ * Uses the `textDecoration` CSS injection hack to set font-size and
+ * font-family. VS Code passes the `textDecoration` value as raw CSS, so
+ * injecting after a semicolon lets us set arbitrary CSS properties.
  *
- * TODO: The textDecoration CSS injection for font-size needs F5 validation.
- * If VS Code strips or sanitizes the injected CSS, the fontWeight fallback
- * is still in effect and headings will still look differentiated.
+ * Called each time providers are (re-)registered so that switching bundles
+ * produces new DecorationTypes with the correct styles.
  */
-const HEADING_TEXT_COLLAPSED: Record<string, vscode.DecorationRenderOptions> = {
-    [ID_HEADING_TEXT_H1]: {
-        textDecoration: 'none; font-size: 1.6em',
-        fontWeight: '700',
-    },
-    [ID_HEADING_TEXT_H2]: {
-        textDecoration: 'none; font-size: 1.3em',
-        fontWeight: '700',
-    },
-    [ID_HEADING_TEXT_H3]: {
-        textDecoration: 'none; font-size: 1.1em',
-        fontWeight: '600',
-    },
-    [ID_HEADING_TEXT_H46]: {
-        fontWeight: '600',
-    },
-};
+function buildHeadingTextCollapsed(): Record<string, vscode.DecorationRenderOptions> {
+    const bundle = getActiveBundle();
+
+    // Build the CSS injection string for headings. Includes font-family from
+    // the bundle's headingFont so serif/sans-serif switches take effect.
+    const h1Css = `none; font-size: ${bundle.h1.size}; font-family: ${bundle.headingFont}` +
+        (bundle.h1.letterSpacing ? `; letter-spacing: ${bundle.h1.letterSpacing}` : '');
+    const h2Css = `none; font-size: ${bundle.h2.size}; font-family: ${bundle.headingFont}` +
+        (bundle.h2.letterSpacing ? `; letter-spacing: ${bundle.h2.letterSpacing}` : '');
+    const h3Css = `none; font-size: ${bundle.h3.size}; font-family: ${bundle.headingFont}` +
+        (bundle.h3.letterSpacing ? `; letter-spacing: ${bundle.h3.letterSpacing}` : '');
+
+    return {
+        [ID_HEADING_TEXT_H1]: {
+            textDecoration: h1Css,
+            fontWeight: bundle.h1.weight,
+        },
+        [ID_HEADING_TEXT_H2]: {
+            textDecoration: h2Css,
+            fontWeight: bundle.h2.weight,
+        },
+        [ID_HEADING_TEXT_H3]: {
+            textDecoration: h3Css,
+            fontWeight: bundle.h3.weight,
+            ...(bundle.h3.style === 'italic' ? { fontStyle: 'italic' } : {}),
+        },
+        [ID_HEADING_TEXT_H46]: {
+            fontWeight: '600',
+        },
+    };
+}
 
 const HEADING_TEXT_EXPANDED: vscode.DecorationRenderOptions = {
     // No overrides — text rendered normally when cursor is on the line.
@@ -1018,10 +1033,11 @@ export class MarkdownPolishProvider implements vscode.Disposable {
     constructor(private manager: DecorationManager) {
         this.registerFromConfig();
 
-        // Re-register when the user changes polish settings.
+        // Re-register when the user changes polish settings or typography bundle.
         this.disposables.push(
             vscode.workspace.onDidChangeConfiguration(e => {
-                if (e.affectsConfiguration('cozyMd.polish')) {
+                if (e.affectsConfiguration('cozyMd.polish') ||
+                    e.affectsConfiguration('cozyMd.typography.activeBundle')) {
                     this.unregisterAll();
                     this.registerFromConfig();
                     this.manager.update();
@@ -1052,26 +1068,29 @@ export class MarkdownPolishProvider implements vscode.Disposable {
                 HEADING_MARKER_EXPANDED,
             );
 
+            // Build heading text styles from the active typography bundle.
+            const headingStyles = buildHeadingTextCollapsed();
+
             // Heading text per level (h1, h2, h3 each get font-size + weight).
             this.register(
                 new HeadingTextProvider(ID_HEADING_TEXT_H1, [1]),
-                HEADING_TEXT_COLLAPSED[ID_HEADING_TEXT_H1],
+                headingStyles[ID_HEADING_TEXT_H1],
                 HEADING_TEXT_EXPANDED,
             );
             this.register(
                 new HeadingTextProvider(ID_HEADING_TEXT_H2, [2]),
-                HEADING_TEXT_COLLAPSED[ID_HEADING_TEXT_H2],
+                headingStyles[ID_HEADING_TEXT_H2],
                 HEADING_TEXT_EXPANDED,
             );
             this.register(
                 new HeadingTextProvider(ID_HEADING_TEXT_H3, [3]),
-                HEADING_TEXT_COLLAPSED[ID_HEADING_TEXT_H3],
+                headingStyles[ID_HEADING_TEXT_H3],
                 HEADING_TEXT_EXPANDED,
             );
             // h4-h6 get fontWeight only (no font-size change).
             this.register(
                 new HeadingTextProvider(ID_HEADING_TEXT_H46, [4, 5, 6]),
-                HEADING_TEXT_COLLAPSED[ID_HEADING_TEXT_H46],
+                headingStyles[ID_HEADING_TEXT_H46],
                 HEADING_TEXT_EXPANDED,
             );
         }
@@ -1144,7 +1163,10 @@ export class MarkdownPolishProvider implements vscode.Disposable {
         if (dimFrontmatter) {
             this.register(
                 new FrontmatterProvider(),
-                { opacity: FRONTMATTER_DIM_OPACITY },
+                {
+                    opacity: FRONTMATTER_DIM_OPACITY,
+                    textDecoration: "none; font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', Menlo, Consolas, monospace; font-size: 0.9em",
+                },
                 { opacity: '1.0' },
             );
         }

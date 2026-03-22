@@ -1,4 +1,4 @@
-# Cozy MD Editor
+# Cozy Markdown Editor
 
 <p align="center">
   <a href="https://marketplace.visualstudio.com/items?itemName=dudgeon.cozy-md-editor">

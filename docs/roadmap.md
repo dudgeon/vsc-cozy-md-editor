@@ -105,6 +105,10 @@ Use Snapshot + Diff approach (see Decision Log in CLAUDE.md for rationale).
 - README instructions for reverting to standard VS Code markdown defaults
   (disable extension or reset `[markdown]` settings)
 
+**Typography follow-ups:**
+- Toolbar button to cycle between typography bundles (revisit when usage
+  patterns emerge — settings may be sufficient)
+
 **Remaining UX polish:**
 - Theme-awareness across all decorations
 - Nested ordered list numbering + config (research Typora a/i convention)
