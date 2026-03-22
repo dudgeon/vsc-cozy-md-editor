@@ -175,13 +175,57 @@ The `skills/` directory contains Claude Code skills for this project:
 - **Commands**: formatting (bold, italic, code, heading cycle, link, horizontal rule,
   blockquote), table operations (insert, add/remove row/column, alignment), frontmatter
   (insert with templates, edit existing fields) — all implemented and registered
+- **Editing behaviors**: Enter continues lists/blockquotes/task lists, Tab/Shift+Tab
+  indents lists or navigates table cells, Cmd+[/] indents/outdents lines
+- **Table CodeLens toolbar**: Align Columns, Compact, +Row, +Column, Delete Row/Column
+  buttons appear above each table
 - **Keybindings**: Cmd+B (bold), Cmd+I (italic), Cmd+` (code), Cmd+Shift+H (heading),
-  Cmd+K (link), Cmd+Alt+F (frontmatter), Cmd+Alt+T (table menu)
+  Cmd+K (link), Cmd+Alt+F (frontmatter), Cmd+Alt+T (table menu), Cmd+[/] (indent/outdent),
+  Cmd+Alt+[/] (next/prev change), Cmd+Alt+M (CriticMarkup comment, stub)
 - **Test fixture**: `test-fixtures/kitchen-sink.md` covers all supported markdown styles
 - **Table auto-format**: tables auto-align columns on save (respects `autoAlignOnSave` setting)
 - Remaining stubs: comments, track-changes, Claude dispatch, providers, sidebar, google sync
+- **Blockquote decoration**: `> ` markers hidden, left border + italic via CSS injection
+- **Expand-on-cursor**: narrowed to exact range (not full line) — cursor must be
+  within or adjacent to the decorated span for markers to reveal
 - F5 should show: hidden syntax markers with expand-on-cursor, sized headings,
-  underlined links, inline code with background, table column alignment on save
+  underlined links, inline code with background, blockquote left-border, table
+  CodeLens toolbar, Enter/Tab editing behaviors
+
+### Known Issues (from third F5 validation, 2026-03-21)
+
+11. **Inline style markers show asymmetrically**
+    When cursor is near a styled span (e.g., `**bold**`), only the leading OR
+    trailing markers reveal — not both. This is distracting. Root cause: the
+    expand-on-cursor range check treats the opening `**` and closing `**` as
+    independent decorated regions, so cursor proximity to one doesn't expand
+    the other. Fix: when expanding any marker region for a styled span, also
+    expand its paired marker. Requires linking opening/closing marker regions
+    (e.g., via a shared span ID or by grouping them into a single region that
+    covers the full `**bold**` span). Affects: bold, italic, inline code,
+    links. Slot: Phase 1.7.
+
+12. **Table CodeLens always visible**
+    The CodeLens toolbar (Align, Compact, +Row, etc.) shows above every table
+    at all times. It should only appear when the cursor is inside the table.
+    Fix: `provideCodeLenses` should check the active cursor position and only
+    return CodeLens items for the table the cursor is in. The provider already
+    fires `onDidChangeCodeLenses` on cursor move — just needs the filter
+    logic. Slot: Phase 1.7.
+
+13. **CriticMarkup not color-coded (reminder)**
+    Additions/deletions/substitutions/comments/highlights render as plain
+    text with no color differentiation. The parser exists. The decoration
+    provider is Phase 2 work — already scoped. Confirming it is still NEXT
+    after Phase 1.7.
+
+14. **Nested ordered list numbering**
+    Indented ordered list items show as `1.`, `2.`, etc. at every level.
+    Most markdown editors render nested levels differently (e.g., a, b, c or
+    i, ii, iii). Markdown itself doesn't specify sub-numbering — this is
+    purely a visual/decoration concern. Investigate what common editors do
+    (Typora uses a/i alternation). Default to the most common convention;
+    add a config option for numbering style to the backlog. Slot: Phase 6.
 
 ### Known Issues (from second F5 validation, 2026-03-21)
 
@@ -234,12 +278,14 @@ The `skills/` directory contains Claude Code skills for this project:
 Phase 0: Build & test skill — DONE
 Phase 1: Markdown Polish + Toolbar + Tables — DONE
 Phase 1.5: Decoration polish (first pass) — DONE
-Phase 1.6: Editing behaviors + decoration refinements — NEXT
+Phase 1.6: Editing behaviors + decoration refinements — DONE
+Phase 1.7: Paired marker expansion + table CodeLens scoping — NEXT
 Phase 2: CriticMarkup Display (read/render track changes)
 Phase 3: Track Changes Recording + Comments + Simple Claude dispatch
 Phase 4: Claude as Collaborator (context buffer, rewrite, file watcher)
 Phase 5: Agentic Workflows (@claude annotations, conflict resolution)
-Phase 6: UX Polish (light/dark toggle, theme-awareness, advanced table rendering)
+Phase 6: UX Polish (light/dark toggle, theme-awareness, nested list numbering,
+         table CodeLens styling, advanced table rendering)
 Phase 7: Google Workspace Sync — gated on gws-cli availability
          (no-regrets items like frontmatter URL pairing can land any time)
 
@@ -285,6 +331,20 @@ Editing behaviors that make markdown feel like a word processor:
    table, Tab moves to the next cell, Shift+Tab to the previous cell.
    At end of last cell in a row, Tab moves to first cell of next row.
    At end of last row, Tab creates a new row.
+
+### Phase 1.7 Scope — Paired Markers + Table CodeLens Scoping
+Quick fixes from third F5 validation:
+1. **Paired marker expansion** — when cursor expands one side of an inline
+   style (e.g., the opening `**` of bold), the closing markers must also
+   expand. Approach: group opening+closing markers into a single logical
+   span in the DecorationManager, so expanding one expands both. Affects
+   bold, italic, inline code, links. File: `markdown-polish.ts` (provider
+   emits linked regions) + possibly `manager.ts` (span-aware expansion).
+2. **Table CodeLens cursor-scoped** — only show CodeLens for the table the
+   cursor is currently inside. Filter in `provideCodeLenses` using the
+   active editor's cursor position. File: `codelens.ts`.
+3. **Table CodeLens styling** — future polish pass on button appearance
+   (icons, separators, compact layout). Add to Phase 6 backlog.
 
 ### Phase 2 Scope — CriticMarkup Display
 Wire the CriticMarkup parser into a decoration provider for visual track changes:

@@ -5,6 +5,8 @@ import { registerFormattingCommands } from './commands/formatting';
 import { registerTableCommands } from './commands/tables';
 import { registerFrontmatterCommands } from './commands/frontmatter';
 import { registerTableFormatter } from './commands/table-formatter';
+import { registerEditingCommands } from './commands/editing';
+import { MarkdownCraftCodeLensProvider, registerTableCodeLensCommands } from './providers/codelens';
 
 let decorationManager: DecorationManager | undefined;
 
@@ -23,14 +25,26 @@ export function activate(context: vscode.ExtensionContext): void {
     registerTableCommands(context);
     registerFrontmatterCommands(context);
     registerTableFormatter(context);
+    registerEditingCommands(context);
 
     // Trigger initial decoration update for the active editor
     if (vscode.window.activeTextEditor) {
         decorationManager.update();
     }
 
+    // Phase 1: Table CodeLens (toolbar above tables)
+    const codeLensProvider = new MarkdownCraftCodeLensProvider();
+    context.subscriptions.push(
+        vscode.languages.registerCodeLensProvider(
+            { language: 'markdown' },
+            codeLensProvider
+        )
+    );
+    context.subscriptions.push(codeLensProvider);
+    registerTableCodeLensCommands(context);
+
     // Phase 2: Register CriticMarkup decorations
-    // Phase 2: Register CodeLens provider
+    // Phase 2: Register CodeLens provider (CriticMarkup accept/reject — TODO)
     // Phase 3: Register track changes
     // Phase 3: Register Claude dispatch commands
 }

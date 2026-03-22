@@ -179,6 +179,36 @@
         "command": "cozyMd.clearContextBuffer",
         "title": "Clear Context Buffer",
         "category": "Cozy MD"
+      },
+      {
+        "command": "cozyMd.onEnterKey",
+        "title": "Enter Key (List/Quote Continuation)",
+        "category": "Cozy MD"
+      },
+      {
+        "command": "cozyMd.onTabKey",
+        "title": "Tab Key (Table Nav / List Indent)",
+        "category": "Cozy MD"
+      },
+      {
+        "command": "cozyMd.onShiftTabKey",
+        "title": "Shift+Tab Key (Table Nav / List Outdent)",
+        "category": "Cozy MD"
+      },
+      {
+        "command": "cozyMd.indentLines",
+        "title": "Indent Lines",
+        "category": "Cozy MD"
+      },
+      {
+        "command": "cozyMd.outdentLines",
+        "title": "Outdent Lines",
+        "category": "Cozy MD"
+      },
+      {
+        "command": "cozyMd.addCriticComment",
+        "title": "Add CriticMarkup Comment",
+        "category": "Cozy MD"
       }
     ],
     "menus": {
@@ -399,14 +429,14 @@
       },
       {
         "command": "cozyMd.nextChange",
-        "key": "ctrl+]",
-        "mac": "cmd+]",
+        "key": "ctrl+alt+]",
+        "mac": "cmd+alt+]",
         "when": "resourceLangId == markdown"
       },
       {
         "command": "cozyMd.previousChange",
-        "key": "ctrl+[",
-        "mac": "cmd+[",
+        "key": "ctrl+alt+[",
+        "mac": "cmd+alt+[",
         "when": "resourceLangId == markdown"
       },
       {
@@ -420,6 +450,39 @@
         "key": "ctrl+alt+r",
         "mac": "cmd+alt+r",
         "when": "resourceLangId == markdown"
+      },
+      {
+        "command": "cozyMd.onEnterKey",
+        "key": "enter",
+        "when": "resourceLangId == markdown && editorTextFocus && !suggestWidgetVisible && !editorHasMultipleSelections"
+      },
+      {
+        "command": "cozyMd.onTabKey",
+        "key": "tab",
+        "when": "resourceLangId == markdown && editorTextFocus && !suggestWidgetVisible && !editorHasMultipleSelections && !inSnippetMode"
+      },
+      {
+        "command": "cozyMd.onShiftTabKey",
+        "key": "shift+tab",
+        "when": "resourceLangId == markdown && editorTextFocus && !suggestWidgetVisible && !editorHasMultipleSelections && !inSnippetMode"
+      },
+      {
+        "command": "cozyMd.indentLines",
+        "key": "ctrl+]",
+        "mac": "cmd+]",
+        "when": "resourceLangId == markdown && editorTextFocus"
+      },
+      {
+        "command": "cozyMd.outdentLines",
+        "key": "ctrl+[",
+        "mac": "cmd+[",
+        "when": "resourceLangId == markdown && editorTextFocus"
+      },
+      {
+        "command": "cozyMd.addCriticComment",
+        "key": "ctrl+alt+m",
+        "mac": "cmd+alt+m",
+        "when": "resourceLangId == markdown && editorTextFocus"
       }
     ],
     "configurationDefaults": {

@@ -299,37 +299,99 @@ export class DecorationManager implements vscode.Disposable {
     /**
      * Determine whether a cursor/selection is "near" a region.
      *
-     * A region is considered expanded if:
-     *   1. ANY cursor sits on a line that overlaps the region's line span
-     *      (fast line-set check), OR
-     *   2. ANY selection range intersects the region's range (precise check
-     *      for multi-line selections that span into the region).
+     * A region is considered expanded if ANY cursor position is:
+     *   - Inside the region's range, OR
+     *   - Directly adjacent (within 1 character) of the region's start or end
      *
-     * The line-based check (1) is tried first because it is O(1) per line
-     * and covers the overwhelming majority of cases.
+     * The 1-character adjacency buffer prevents decoration flickering when
+     * the user types at the boundary of a decorated region.
+     *
+     * Uses a two-phase approach for performance:
+     *   Phase 1: Fast reject via cursorLines Set (O(1) per line). If no cursor
+     *            is on any line the region spans, skip the expensive checks.
+     *   Phase 2: Precise range/adjacency check for regions on cursor lines.
+     *
+     * Complexity: O(regions * cursors) per cursor move for regions sharing a
+     * cursor line. This is acceptable for typical documents (< 200 regions,
+     * 1–3 cursors) but could become a concern for extremely decorated files
+     * with many active cursors.
+     *
+     * TODO: F5-validate this in Extension Development Host to confirm the
+     * expand/collapse feel is right — the 1-char adjacency buffer may need
+     * tuning based on real typing cadence.
      */
     private isCursorNearRegion(
         range: vscode.Range,
         cursorLines: Set<number>,
         selections: readonly vscode.Selection[],
     ): boolean {
-        // Fast path: check if any cursor line overlaps the region's line span.
+        // Phase 1: Fast reject — if no cursor is on any line this region
+        // spans, skip the expensive per-cursor range checks.
         const startLine = range.start.line;
         const endLine = range.end.line;
+        let onSameLine = false;
         for (let l = startLine; l <= endLine; l++) {
             if (cursorLines.has(l)) {
+                onSameLine = true;
+                break;
+            }
+        }
+        if (!onSameLine) {
+            return false;
+        }
+
+        // Phase 2: Precise check — is any cursor within or directly adjacent
+        // to this region's range?
+        for (const sel of selections) {
+            const cursor = sel.active;
+
+            // Check if cursor is inside the region (covers typing within
+            // a decorated span).
+            if (range.contains(cursor)) {
+                return true;
+            }
+
+            // Check adjacency: cursor is within 1 character of the region's
+            // start or end. This prevents flicker when the cursor sits just
+            // outside a boundary (e.g., immediately after typing `**`).
+            if (this.isAdjacentToRange(cursor, range)) {
                 return true;
             }
         }
 
-        // Slow path: for multi-line selections that may intersect the region
-        // without sharing a line number in the set (shouldn't normally happen
-        // given how we build cursorLines, but guards against edge cases).
-        for (let s = 0; s < selections.length; s++) {
-            const sel = selections[s];
-            if (this.rangesIntersect(range, sel)) {
-                return true;
-            }
+        return false;
+    }
+
+    /**
+     * Check whether a cursor position is within 1 character of a range's
+     * start or end boundary (adjacency check).
+     *
+     * Adjacency is defined on the same line only — a cursor on the line
+     * above or below is NOT adjacent (the fast line pre-filter already
+     * handles cross-line proximity).
+     */
+    private isAdjacentToRange(
+        cursor: vscode.Position,
+        range: vscode.Range,
+    ): boolean {
+        // Adjacent to the start of the range:
+        // Cursor is on the same line as range.start and within 1 char.
+        if (
+            cursor.line === range.start.line &&
+            cursor.character >= range.start.character - 1 &&
+            cursor.character <= range.start.character + 1
+        ) {
+            return true;
+        }
+
+        // Adjacent to the end of the range:
+        // Cursor is on the same line as range.end and within 1 char.
+        if (
+            cursor.line === range.end.line &&
+            cursor.character >= range.end.character - 1 &&
+            cursor.character <= range.end.character + 1
+        ) {
+            return true;
         }
 
         return false;

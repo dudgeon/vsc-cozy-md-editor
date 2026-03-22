@@ -62,6 +62,15 @@ const INLINE_CODE_RE = /(?<!`)(`+)(?!`)(.+?)(?<!`)\1(?!`)/g;
  */
 const LINK_RE = /\[([^\]]+)\]\(([^)]+)\)/g;
 
+/**
+ * Matches blockquote lines: optional leading whitespace, one or more `>`
+ * characters (possibly separated by spaces), then a space and content.
+ *
+ * Captures: (1) the full blockquote prefix including all `>` markers and
+ * the trailing space (e.g. `> `, `>> `, `> > `).
+ */
+const BLOCKQUOTE_RE = /^(\s*(?:>\s*)+)/;
+
 // ---------------------------------------------------------------------------
 // Sub-provider IDs
 // ---------------------------------------------------------------------------
@@ -79,6 +88,8 @@ const ID_INLINE_CODE_CONTENT = 'markdown-polish-inline-code-content';
 const ID_CODE_BLOCK_FENCES = 'markdown-polish-code-block-fences';
 const ID_CODE_BLOCK_CONTENT = 'markdown-polish-code-block-content';
 const ID_FRONTMATTER = 'markdown-polish-frontmatter';
+const ID_BLOCKQUOTE_MARKERS = 'markdown-polish-blockquote-markers';
+const ID_BLOCKQUOTE_CONTENT = 'markdown-polish-blockquote-content';
 
 // ---------------------------------------------------------------------------
 // Heading styles
@@ -191,6 +202,41 @@ const CODE_BLOCK_CONTENT_COLLAPSED: vscode.DecorationRenderOptions = {
 const CODE_BLOCK_CONTENT_EXPANDED: vscode.DecorationRenderOptions = {
     isWholeLine: true,
     // No overrides — content rendered normally when cursor is inside the block.
+};
+
+// ---------------------------------------------------------------------------
+// Blockquote styles
+// ---------------------------------------------------------------------------
+
+/**
+ * Collapsed style for blockquote `> ` markers — hidden using the same
+ * transparent-color + negative-letter-spacing trick as other syntax markers.
+ */
+const BLOCKQUOTE_MARKER_COLLAPSED: vscode.DecorationRenderOptions = {
+    ...HIDDEN_COLLAPSED,
+};
+
+const BLOCKQUOTE_MARKER_EXPANDED: vscode.DecorationRenderOptions = {
+    // No overrides — markers rendered normally when cursor is on the line.
+};
+
+/**
+ * Collapsed style for blockquote content — a left border to visually indicate
+ * the quote, plus subtle italic to differentiate from normal text.
+ *
+ * TODO: The textDecoration CSS injection for border-left and padding-left
+ * needs F5 validation. VS Code may strip or sanitize the injected CSS. The
+ * fontStyle: 'italic' will definitely work as a fallback visual indicator.
+ */
+const BLOCKQUOTE_CONTENT_COLLAPSED: vscode.DecorationRenderOptions = {
+    textDecoration: 'none; border-left: 3px solid rgba(128, 128, 128, 0.4); padding-left: 12px',
+    fontStyle: 'italic',
+    isWholeLine: true,
+};
+
+const BLOCKQUOTE_CONTENT_EXPANDED: vscode.DecorationRenderOptions = {
+    isWholeLine: true,
+    // No overrides — content rendered normally when cursor is on the line.
 };
 
 // ---------------------------------------------------------------------------
@@ -710,6 +756,108 @@ class CodeBlockContentProvider implements DecorationProvider {
 }
 
 // ---------------------------------------------------------------------------
+// BlockquoteMarkerProvider
+// ---------------------------------------------------------------------------
+
+/**
+ * Provides regions for blockquote `> ` prefix markers (including nested `>> `).
+ * In collapsed state the markers are hidden (transparent + zero width);
+ * in expanded state they are fully visible.
+ */
+class BlockquoteMarkerProvider implements DecorationProvider {
+    readonly id = ID_BLOCKQUOTE_MARKERS;
+
+    provideDecorations(editor: vscode.TextEditor): DecoratedRegion[] {
+        const doc = editor.document;
+        const regions: DecoratedRegion[] = [];
+        const fmEnd = detectFrontmatterEnd(doc);
+        let inFencedBlock = false;
+
+        for (let i = 0; i < doc.lineCount; i++) {
+            if (fmEnd !== -1 && i <= fmEnd) {
+                continue;
+            }
+
+            const line = doc.lineAt(i);
+            const text = line.text;
+            const trimmed = text.trimStart();
+
+            if (trimmed.startsWith('```')) {
+                inFencedBlock = !inFencedBlock;
+                continue;
+            }
+            if (inFencedBlock) {
+                continue;
+            }
+
+            const match = BLOCKQUOTE_RE.exec(text);
+            if (!match) {
+                continue;
+            }
+
+            const markerLength = match[1].length;
+            const markerRange = new vscode.Range(i, 0, i, markerLength);
+            regions.push(makeSimpleRegion(markerRange));
+        }
+
+        return regions;
+    }
+}
+
+// ---------------------------------------------------------------------------
+// BlockquoteContentProvider
+// ---------------------------------------------------------------------------
+
+/**
+ * Provides whole-line regions for blockquote content (the text after the `> `
+ * prefix). In collapsed state the content gets a left border and italic
+ * styling to visually indicate a quoted block; in expanded state no special
+ * styling is applied.
+ */
+class BlockquoteContentProvider implements DecorationProvider {
+    readonly id = ID_BLOCKQUOTE_CONTENT;
+
+    provideDecorations(editor: vscode.TextEditor): DecoratedRegion[] {
+        const doc = editor.document;
+        const regions: DecoratedRegion[] = [];
+        const fmEnd = detectFrontmatterEnd(doc);
+        let inFencedBlock = false;
+
+        for (let i = 0; i < doc.lineCount; i++) {
+            if (fmEnd !== -1 && i <= fmEnd) {
+                continue;
+            }
+
+            const line = doc.lineAt(i);
+            const text = line.text;
+            const trimmed = text.trimStart();
+
+            if (trimmed.startsWith('```')) {
+                inFencedBlock = !inFencedBlock;
+                continue;
+            }
+            if (inFencedBlock) {
+                continue;
+            }
+
+            const match = BLOCKQUOTE_RE.exec(text);
+            if (!match) {
+                continue;
+            }
+
+            // Whole-line region for the content portion of the blockquote line.
+            const contentRange = new vscode.Range(
+                i, 0,
+                i, text.length,
+            );
+            regions.push(makeSimpleRegion(contentRange));
+        }
+
+        return regions;
+    }
+}
+
+// ---------------------------------------------------------------------------
 // FrontmatterProvider
 // ---------------------------------------------------------------------------
 
@@ -927,6 +1075,20 @@ export class MarkdownPolishProvider implements vscode.Disposable {
                 new CodeBlockContentProvider(),
                 CODE_BLOCK_CONTENT_COLLAPSED,
                 CODE_BLOCK_CONTENT_EXPANDED,
+            );
+
+            // Blockquote `> ` markers: hidden when collapsed.
+            this.register(
+                new BlockquoteMarkerProvider(),
+                BLOCKQUOTE_MARKER_COLLAPSED,
+                BLOCKQUOTE_MARKER_EXPANDED,
+            );
+
+            // Blockquote content lines: left border + italic when collapsed.
+            this.register(
+                new BlockquoteContentProvider(),
+                BLOCKQUOTE_CONTENT_COLLAPSED,
+                BLOCKQUOTE_CONTENT_EXPANDED,
             );
         }
 
