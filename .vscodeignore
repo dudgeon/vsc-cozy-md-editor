@@ -15,3 +15,5 @@ cozy-md-editor-fleece.png
 .nvmrc
 package-lock.json
 .env
+.claude/**
+docs/**

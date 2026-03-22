@@ -18,7 +18,7 @@ A lot of people are coming to VS Code for the first time because it's the main w
 
 **Track changes.** The extension reads and renders [CriticMarkup](https://criticmarkup.com) — a format for marking additions, deletions, and substitutions right in the file. Changes show up color-coded — green for additions, red strikethrough for deletions — and you can accept or reject them individually. Move your cursor to a change to see the full syntax and Accept/Reject controls.
 
-Track changes *recording* (automatically wrapping your edits in CriticMarkup) and Claude Code integration are coming in the next release.
+Track changes *recording* is built in — toggle it on and your edits are automatically wrapped in CriticMarkup. Claude Code integration lets you ask Claude about your file or selection directly from the editor.
 
 **Frontmatter.** Structured metadata (title, author, tags, status) can go at the top of any markdown file. The extension has templates and shortcuts so you don't have to remember the formatting rules.
 
@@ -32,7 +32,7 @@ google_doc_url: https://docs.google.com/document/d/your-doc-id
 ```
 ~~~
 
-This also works for Google Slides — if you generate a presentation from a markdown file, store the Slides URL the same way. It's just metadata in the file, so it doesn't affect anything else. Full round-trip sync between markdown and Google Docs is planned but not built yet.
+This also works for Google Slides — if you generate a presentation from a markdown file, store the Slides URL the same way. It's just metadata in the file, so it doesn't affect anything else. Full round-trip sync between markdown and Google Docs is on the roadmap.
 
 ## Installation
 

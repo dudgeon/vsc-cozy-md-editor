@@ -2,6 +2,18 @@
 
 All notable changes to the Cozy MD Editor extension will be documented in this file.
 
+## [0.2.0] - 2026-03-22
+
+### Added
+
+- Track changes recording with snapshot+diff approach — toggle recording on/off, and changes are captured as CriticMarkup when you commit
+- Light/dark/auto theme toggle for editor styling
+- Comments command (Cmd+Alt+M) for inline CriticMarkup comments
+
+### Changed
+
+- Improved expand-on-cursor decoration performance
+
 ## [0.1.0] - 2026-03-22
 
 ### Added
