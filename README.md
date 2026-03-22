@@ -32,7 +32,7 @@ Track changes *recording* is built in — toggle it on and your edits are automa
 
 The extension ships with two typography bundles:
 
-- **Cozy** (default) — Newsreader for headings, Plus Jakarta Sans for body text. Warm and literary, good for long-form writing and drafts.
+- **Reader** (default) — Newsreader for headings, Plus Jakarta Sans for body text. Warm and literary, good for long-form writing and drafts.
 - **Clean** — Inter for everything. Information-dense and familiar (same font as Notion, Linear, GitHub). Good for notes, research, and structured docs.
 
 Switch between them in Settings (`Cmd+,`) — search for "typography bundle".

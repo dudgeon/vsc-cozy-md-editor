@@ -43,6 +43,21 @@ export class DecorationManager implements vscode.Disposable {
     private disposables: vscode.Disposable[] = [];
     private providers: Map<string, DecorationProvider> = new Map();
 
+    /** When false, all decorations are cleared and updates are skipped. */
+    private _enabled = true;
+
+    get enabled(): boolean { return this._enabled; }
+
+    setEnabled(value: boolean): void {
+        this._enabled = value;
+        if (!value) {
+            const editor = vscode.window.activeTextEditor;
+            if (editor) { this.clearAllDecorations(editor); }
+        } else {
+            this.update();
+        }
+    }
+
     // Two TextEditorDecorationTypes per provider — one for collapsed, one for expanded.
     // These are long-lived VS Code objects; we dispose them when the provider is
     // unregistered or when the manager is disposed.
@@ -156,6 +171,11 @@ export class DecorationManager implements vscode.Disposable {
             return;
         }
 
+        if (!this._enabled) {
+            this.clearAllDecorations(editor);
+            return;
+        }
+
         // Only operate on markdown files.
         if (editor.document.languageId !== 'markdown') {
             this.clearAllDecorations(editor);
@@ -193,7 +213,7 @@ export class DecorationManager implements vscode.Disposable {
     private onCursorChange(event: vscode.TextEditorSelectionChangeEvent): void {
         const editor = event.textEditor;
 
-        if (editor.document.languageId !== 'markdown') {
+        if (!this._enabled || editor.document.languageId !== 'markdown') {
             return;
         }
 

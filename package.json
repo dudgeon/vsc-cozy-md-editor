@@ -196,6 +196,16 @@
         "category": "Cozy MD"
       },
       {
+        "command": "cozyMd.enableDecorations",
+        "title": "MD",
+        "category": "Cozy MD"
+      },
+      {
+        "command": "cozyMd.disableDecorations",
+        "title": "Cozy",
+        "category": "Cozy MD"
+      },
+      {
         "command": "cozyMd.themeToAuto",
         "title": "Theme: Dark",
         "category": "Cozy MD"
@@ -239,9 +249,19 @@
     "menus": {
       "editor/title": [
         {
+          "command": "cozyMd.disableDecorations",
+          "when": "resourceLangId == markdown && cozyMd.decorationsEnabled",
+          "group": "navigation@4"
+        },
+        {
+          "command": "cozyMd.enableDecorations",
+          "when": "resourceLangId == markdown && !cozyMd.decorationsEnabled",
+          "group": "navigation@4"
+        },
+        {
           "command": "cozyMd.togglePreview",
           "when": "resourceLangId == markdown",
-          "group": "navigation@4"
+          "group": "navigation@5"
         },
         {
           "command": "cozyMd.toggleTrackChanges",
@@ -307,8 +327,8 @@
       "properties": {
         "cozyMd.typography.activeBundle": {
           "type": "string",
-          "default": "cozy",
-          "markdownDescription": "Which typography bundle to use for markdown files.\n\n**Built-in bundles:**\n- `cozy` — Newsreader headings + Plus Jakarta Sans body (warm, literary)\n- `clean` — Inter everywhere (information-dense, knowledge work)\n\nYou can also enter the name of a custom bundle you've defined in `#cozyMd.typography.customBundles#`."
+          "default": "reader",
+          "markdownDescription": "Which typography bundle to use for markdown files.\n\n**Built-in bundles:**\n- `reader` — Newsreader headings + Plus Jakarta Sans body (warm, literary)\n- `clean` — Inter everywhere (information-dense, knowledge work)\n\nYou can also enter the name of a custom bundle you've defined in `#cozyMd.typography.customBundles#`."
         },
         "cozyMd.typography.customBundles": {
           "type": "object",
@@ -322,7 +342,7 @@
               "h2": { "size": "1.375em", "weight": "600", "letterSpacing": "-0.01em" },
               "h3": { "size": "1em", "weight": "600" }
             },
-            "cozy": {
+            "reader": {
               "bodyFont": "'Plus Jakarta Sans', 'Avenir Next', -apple-system, 'Helvetica Neue', sans-serif",
               "headingFont": "'Newsreader', 'New York', Charter, Georgia, serif",
               "bodySize": 16,

@@ -65,6 +65,19 @@ export function activate(context: vscode.ExtensionContext): void {
     // Phase 2: CodeLens provider now includes CriticMarkup accept/reject (in codelens.ts)
     // Phase 3: Track changes commands (accept/reject, navigation)
     registerTrackChangesCommands(context);
+    // Phase 4: MD/Cozy decoration toggle
+    vscode.commands.executeCommand('setContext', 'cozyMd.decorationsEnabled', true);
+    context.subscriptions.push(
+        vscode.commands.registerCommand('cozyMd.enableDecorations', () => {
+            decorationManager?.setEnabled(true);
+            vscode.commands.executeCommand('setContext', 'cozyMd.decorationsEnabled', true);
+        }),
+        vscode.commands.registerCommand('cozyMd.disableDecorations', () => {
+            decorationManager?.setEnabled(false);
+            vscode.commands.executeCommand('setContext', 'cozyMd.decorationsEnabled', false);
+        }),
+    );
+
     // Phase 3: Toggle preview (one-line wrapper)
     context.subscriptions.push(
         vscode.commands.registerCommand('cozyMd.togglePreview', () => {

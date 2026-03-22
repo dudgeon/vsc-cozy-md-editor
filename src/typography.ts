@@ -43,7 +43,7 @@ export const CLEAN_BUNDLE: TypographyBundle = {
  * Cozy bundle — literary/editorial writing.
  * Newsreader headings (serif), Plus Jakarta Sans body (geometric sans).
  */
-export const COZY_BUNDLE: TypographyBundle = {
+export const READER_BUNDLE: TypographyBundle = {
     bodyFont: "'Plus Jakarta Sans', 'Avenir Next', -apple-system, 'Helvetica Neue', sans-serif",
     headingFont: "'Newsreader', 'New York', Charter, Georgia, serif",
     bodySize: 16,
@@ -55,7 +55,7 @@ export const COZY_BUNDLE: TypographyBundle = {
 
 const BUILT_IN_BUNDLES: Record<string, TypographyBundle> = {
     clean: CLEAN_BUNDLE,
-    cozy: COZY_BUNDLE,
+    reader: READER_BUNDLE,
 };
 
 // ---------------------------------------------------------------------------
@@ -104,7 +104,7 @@ function mergeWithDefaults(partial: Record<string, unknown>): TypographyBundle {
  */
 export function getActiveBundle(): TypographyBundle {
     const config = vscode.workspace.getConfiguration('cozyMd.typography');
-    const name = config.get<string>('activeBundle', 'cozy');
+    const name = config.get<string>('activeBundle', 'reader');
 
     // Check custom bundles first (includes the built-in defaults which are
     // externalized into the setting so users can see and edit them)
@@ -119,7 +119,7 @@ export function getActiveBundle(): TypographyBundle {
     }
 
     // Ultimate fallback
-    return COZY_BUNDLE;
+    return READER_BUNDLE;
 }
 
 // ---------------------------------------------------------------------------
@@ -153,7 +153,7 @@ export async function applyTypographyBundle(): Promise<void> {
     if (!userValue || Object.keys(userValue).length === 0) {
         await typoConfig.update('customBundles', {
             clean: CLEAN_BUNDLE,
-            cozy: COZY_BUNDLE,
+            reader: READER_BUNDLE,
         }, vscode.ConfigurationTarget.Global);
     }
 }
