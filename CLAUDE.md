@@ -217,18 +217,17 @@ These are things we tried that DON'T WORK in the VS Code extension API:
   (one frame) on a 500-line document with 50+ decorated elements
 
 ## Skills
-The `skills/` directory contains Claude Code skills for this project:
-- `skills/build/` — `/build` slash command. Runs the full build → lint → test →
+The `.claude/skills/` directory contains Claude Code skills for this project:
+- `.claude/skills/build/` — `/build` slash command. Runs the full build → lint → test →
   package pipeline and reports pass/fail with actionable summaries.
-- `skills/release/` — `/release` slash command. End-to-end release pipeline:
+- `.claude/skills/release/` — `/release` slash command. End-to-end release pipeline:
   pre-flight checks → changelog/README updates → build validation → marketplace
   publish → git tag & push. Uses AskUserQuestion at key decision points
-  (cut release?, version bump type, final publish confirmation). Supersedes the
-  old `/publish` skill.
-- `skills/skill-creator/` — Meta-skill for creating, evaluating, and iterating
+  (cut release?, version bump type, final publish confirmation).
+- `.claude/skills/skill-creator/` — Meta-skill for creating, evaluating, and iterating
   on new skills.
 
 ## Roadmap & Issues
 - Execution roadmap: [docs/roadmap.md](docs/roadmap.md)
-- Original product spec: [Initial-prd.md](Initial-prd.md)
+- Original product spec: [docs/Initial-prd.md](docs/Initial-prd.md)
 - Open issues: [GitHub Issues](https://github.com/dudgeon/vsc-cozy-md-editor/issues)

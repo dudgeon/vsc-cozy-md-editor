@@ -1,7 +1,13 @@
 # Cozy MD Editor
 
 <p align="center">
-  <img src="cozy-md-editor-fleece.png" width="200" alt="Cozy MD Editor logo — a fleece blanket with a markdown hash symbol" />
+  <a href="https://marketplace.visualstudio.com/items?itemName=dudgeon.cozy-md-editor">
+    <img src="docs/cozy-md-editor-fleece.png" width="200" alt="Cozy MD Editor logo — a fleece blanket with a markdown hash symbol" />
+  </a>
+  <br/>
+  <a href="https://marketplace.visualstudio.com/items?itemName=dudgeon.cozy-md-editor">
+    <img src="https://img.shields.io/visual-studio-marketplace/v/dudgeon.cozy-md-editor?label=VS%20Code%20Marketplace&color=blue" alt="VS Code Marketplace" />
+  </a>
 </p>
 
 A VS Code extension that makes markdown easier to work with — especially if you're more used to Google Docs than to code editors.

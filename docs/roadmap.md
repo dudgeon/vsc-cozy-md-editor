@@ -1,7 +1,7 @@
 # Cozy MD Editor — Roadmap
 
 > Living execution roadmap. Updated as phases complete and scope changes.
-> For the original product spec, see [Initial-prd.md](../Initial-prd.md).
+> For the original product spec, see [Initial-prd.md](Initial-prd.md).
 > For open defects and feature requests, see [GitHub Issues](https://github.com/dudgeon/vsc-cozy-md-editor/issues).
 
 ## Completed

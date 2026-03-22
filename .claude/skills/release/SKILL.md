@@ -217,9 +217,9 @@ After a successful package step:
 
 1. **Audit the .vsix contents.** Review the file list printed by `vsce package`.
    Flag any files that shouldn't ship to users — common offenders include:
-   - Dev config (`.claude/`, `.env`, `skills/`, `.nvmrc`)
-   - Documentation not meant for end users (`docs/`, `Initial-prd.md`, `CLAUDE.md`)
-   - Source files or test fixtures (`src/`, `test-fixtures/`)
+   - Dev config (`.claude/`, `.env`, `.nvmrc`)
+   - Documentation not meant for end users (`docs/`, `CLAUDE.md`)
+   - Source files (`src/`)
 
    If unexpected files are found, update `.vscodeignore` to exclude them, then
    re-run `npm run package` to verify the fix before proceeding.

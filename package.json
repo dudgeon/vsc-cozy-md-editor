@@ -5,7 +5,7 @@
   "version": "0.2.0",
   "publisher": "dudgeon",
   "license": "MIT",
-  "icon": "icon.png",
+  "icon": "docs/icon.png",
   "galleryBanner": {
     "color": "#1e1e2e",
     "theme": "dark"
