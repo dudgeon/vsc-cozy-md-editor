@@ -8,3 +8,10 @@ esbuild.js
 **/*.map
 .vscode-test/**
 test-fixtures/**
+CLAUDE.md
+Initial-prd.md
+skills/**
+cozy-md-editor-fleece.png
+.nvmrc
+package-lock.json
+.env

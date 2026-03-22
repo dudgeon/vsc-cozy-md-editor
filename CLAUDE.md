@@ -220,6 +220,11 @@ These are things we tried that DON'T WORK in the VS Code extension API:
 The `skills/` directory contains Claude Code skills for this project:
 - `skills/build/` — `/build` slash command. Runs the full build → lint → test →
   package pipeline and reports pass/fail with actionable summaries.
+- `skills/release/` — `/release` slash command. End-to-end release pipeline:
+  pre-flight checks → changelog/README updates → build validation → marketplace
+  publish → git tag & push. Uses AskUserQuestion at key decision points
+  (cut release?, version bump type, final publish confirmation). Supersedes the
+  old `/publish` skill.
 - `skills/skill-creator/` — Meta-skill for creating, evaluating, and iterating
   on new skills.
 

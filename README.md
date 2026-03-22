@@ -36,9 +36,9 @@ This also works for Google Slides — if you generate a presentation from a mark
 
 ## Installation
 
-Cozy MD Editor isn't in the VS Code marketplace yet. You can either build it from source or install from a `.vsix` file.
+Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=dudgeon.cozy-md-editor) or search for **Cozy MD Editor** in the Extensions panel (`Cmd+Shift+X` / `Ctrl+Shift+X`).
 
-### Build from source (recommended for contributors)
+### Build from source (for contributors)
 
 1. **Clone the repo** and install dependencies:
    ```bash
@@ -49,14 +49,6 @@ Cozy MD Editor isn't in the VS Code marketplace yet. You can either build it fro
    ```
 
 2. **Press F5** in VS Code to launch the Extension Development Host with the extension loaded. Open any `.md` file to see it in action.
-
-### Install from .vsix
-
-1. Build the package: `npm run package`
-2. In VS Code, open the Extensions panel (**Cmd+Shift+X**)
-3. Click the **"..."** menu at the top-right, choose **"Install from VSIX..."**
-4. Select the generated `.vsix` file
-5. Reload when prompted — the extension activates automatically for `.md` files
 
 ## Keyboard shortcuts
 
