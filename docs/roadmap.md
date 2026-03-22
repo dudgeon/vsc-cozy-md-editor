@@ -126,7 +126,8 @@ Use Snapshot + Diff approach (see Decision Log in CLAUDE.md for rationale).
 - Nested ordered list numbering + config (research Typora a/i convention)
 - Table CodeLens styling improvements
 - Replace CodeLens with inline styled badges (`after` pseudo-element)
-- Rich text → markdown paste (clipboard HTML → clean markdown)
+- Rich text → markdown paste (clipboard HTML → clean markdown) —
+  [spec](specs/rich-text-paste.md)
 - Google Docs keyboard convention audit (Cmd+Shift+7/8 for lists, etc.)
 - Table column width improvements (monospace scoping investigation)
 - Cmd+K conflict documentation (intercepts VS Code chord prefix)
