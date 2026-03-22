@@ -576,7 +576,8 @@
     ],
     "configurationDefaults": {
       "[markdown]": {
-        "editor.lineNumbers": "on"
+        "editor.lineNumbers": "on",
+        "editor.occurrencesHighlight": "off"
       },
       "workbench.colorCustomizations": {
         "[Default Dark Modern]": {
