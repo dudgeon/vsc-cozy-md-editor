@@ -89,6 +89,10 @@ Use Snapshot + Diff approach (see Decision Log in CLAUDE.md for rationale).
 
 **Done:**
 - ✅ Light/dark/auto mode toggle button in editor title bar
+- ✅ Typography bundle system (Clean + Cozy built-in, user-defined custom
+  bundles with full control over fonts/sizes/weights/heading styles)
+- ✅ Frontmatter renders in monospace font
+- ✅ Word occurrence highlighting disabled for markdown (issue #5)
 
 **Typography & fonts:**
 - Change the default typeface bundle (currently Inter 16px/1.6lh) — ship
