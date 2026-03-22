@@ -4,25 +4,23 @@
   <img src="cozy-md-editor-fleece.png" width="200" alt="Cozy MD Editor logo — a fleece blanket with a markdown hash symbol" />
 </p>
 
-A VS Code extension that makes markdown feel less like code and more like writing in Google Docs.
+A VS Code extension that makes markdown easier to work with — especially if you're more used to Google Docs than to code editors.
 
-If you're a product manager (or anyone, really) who landed in VS Code because it's the best way to work with Claude Code, Cozy MD Editor is here to make you feel at home. You don't need to know markdown syntax — the extension handles the formatting for you while you focus on the words.
+A lot of people are coming to VS Code for the first time because it's the main way to use Claude Code. If that's you, and you're staring at a bunch of `**` and `#` symbols wondering what happened to your formatting — this extension should help.
 
 ## What it does
 
-**Clean, readable view.** Markdown is full of symbols — `**`, `#`, `[]()`  — that are useful but visually noisy. Cozy MD Editor hides those markers while you're writing and only reveals them when your cursor is nearby. Headings display at different sizes, bold looks bold, links are underlined, and blockquotes are styled — all without leaving the normal text editor.
+**Hides the syntax, shows the formatting.** Markdown uses symbols like `**` for bold and `#` for headings. Cozy MD Editor hides those symbols and shows you what the formatting actually looks like — sized headings, bold text, underlined links. If you need to edit the raw syntax, move your cursor to it and the symbols reappear.
 
-**Familiar keyboard shortcuts.** Cmd+B for bold, Cmd+I for italic, Cmd+K for links — the same shortcuts you already know from Google Docs and other writing tools.
+**Keyboard shortcuts that match Google Docs.** Cmd+B bolds, Cmd+I italicizes, Cmd+K inserts a link. If you've used a word processor before, the shortcuts work the way you'd expect.
 
-**Smart editing behaviors.** Press Enter at the end of a bullet point, and the next line starts a new bullet. Tab indents list items. Tables auto-align when you save. These small things add up to a writing experience that just feels right.
+**Lists and tables behave normally.** Hit Enter at the end of a bullet point and you get a new bullet. Tab indents. Tables have a toolbar for adding rows and columns, and Tab moves between cells. Tables auto-align when you save.
 
-**Track changes.** Cozy MD Editor uses a format called CriticMarkup to track additions, deletions, and substitutions directly in your file. Changes are color-coded — green for additions, red with strikethrough for deletions — and you can accept or reject each one. This works great for reviewing your own drafts, getting edits from Claude, or collaborating with teammates.
+**Track changes.** You can turn on change tracking (using a format called CriticMarkup) that marks additions, deletions, and substitutions right in the file. Changes show up color-coded — green for additions, red strikethrough for deletions — and you can accept or reject them individually. Useful for reviewing your own drafts, working with Claude as an editor, or collaborating with other people.
 
-**Table tools.** Insert a table and get a toolbar right above it with buttons to add rows, add columns, align columns, and more. Tab moves between cells, just like a spreadsheet.
+**Frontmatter.** Structured metadata (title, author, tags, status) can go at the top of any markdown file. The extension has templates and shortcuts so you don't have to remember the formatting rules.
 
-**Frontmatter management.** Every document can have structured metadata at the top (title, author, tags, etc.). Cozy MD Editor gives you templates and shortcuts to insert and edit this metadata without worrying about the formatting rules.
-
-## Google Docs connection
+## Google Docs pairing
 
 If you keep local markdown copies of Google Docs in your repo, you can record the relationship in each file's frontmatter:
 
@@ -32,30 +30,23 @@ google_doc_url: https://docs.google.com/document/d/your-doc-id
 ```
 ~~~
 
-This works for Google Slides too — if you generate a presentation from a markdown file, store the Slides URL the same way. The pairing is just metadata in the file, so it won't interfere with anything. Full round-trip sync between markdown and Google Docs is on the roadmap.
+This also works for Google Slides — if you generate a presentation from a markdown file, store the Slides URL the same way. It's just metadata in the file, so it doesn't affect anything else. Full round-trip sync between markdown and Google Docs is planned but not built yet.
 
 ## Installation
 
-If this is your first time installing a VS Code extension, here's the full walkthrough:
+Cozy MD Editor isn't in the VS Code marketplace yet, so you install it from a `.vsix` file. If you've never done that before, here's the whole process:
 
 1. **Open VS Code.** If you don't have it yet, download it from [code.visualstudio.com](https://code.visualstudio.com).
 
-2. **Open the Extensions panel.** Click the square icon in the left sidebar (it looks like four small blocks), or press **Cmd+Shift+X** (Mac) / **Ctrl+Shift+X** (Windows/Linux).
+2. **Open the Extensions panel.** Click the square icon in the left sidebar (it looks like four small blocks), or press **Cmd+Shift+X** on Mac / **Ctrl+Shift+X** on Windows or Linux.
 
-3. **Search for "Cozy MD Editor."** Type the name into the search bar at the top of the panel.
+3. **Click the "..." menu** at the top-right of the Extensions panel.
 
-4. **Click Install.** That's it. The extension activates automatically whenever you open a markdown file (any file ending in `.md`).
+4. **Choose "Install from VSIX..."** from the dropdown.
 
-### Installing from a .vsix file
+5. **Find and select the `.vsix` file** you were given.
 
-If you received Cozy MD Editor as a `.vsix` file instead of from the marketplace:
-
-1. Open VS Code.
-2. Open the Extensions panel (Cmd+Shift+X / Ctrl+Shift+X).
-3. Click the **"..."** menu at the top of the Extensions panel.
-4. Choose **"Install from VSIX..."**
-5. Find and select the `.vsix` file you downloaded.
-6. Done — reload VS Code if prompted.
+6. **That's it.** VS Code may ask you to reload — go ahead. After that, the extension activates automatically whenever you open a `.md` file.
 
 ## Keyboard shortcuts
 
@@ -76,11 +67,11 @@ If you received Cozy MD Editor as a `.vsix` file instead of from the marketplace
 
 ## Feedback and feature requests
 
-This extension is actively being developed and we'd genuinely like to hear what's working and what isn't. If you have a feature idea, run into a bug, or something just feels off — please open an issue:
+This is under active development. If something doesn't work, feels weird, or you wish it did something it doesn't — open an issue:
 
 **[github.com/dudgeon/vsc-cozy-md-editor/issues](https://github.com/dudgeon/vsc-cozy-md-editor/issues)**
 
-You don't need to be technical to file an issue. Just describe what you expected to happen and what actually happened. Screenshots are always helpful.
+You don't need to be technical. Just describe what happened or what you want, and a screenshot if you have one.
 
 ## License
 
