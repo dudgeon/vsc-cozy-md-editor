@@ -45,6 +45,22 @@ user clear opt-out points before anything goes to the store.
 
 ## Stage 1: Pre-flight
 
+### Node version
+
+The project requires Node 20+ (pinned in `.nvmrc`). Verify the active Node
+version before doing anything else — `vsce package` and `vsce publish` will
+fail silently or with cryptic errors on Node 18.
+
+```bash
+source ~/.nvm/nvm.sh && nvm use
+node --version  # must be v20+
+```
+
+If `nvm use` fails (Node 20 not installed), stop and tell the user to run
+`nvm install 20`. All subsequent `npm` and `npx` commands in this skill must
+run under the correct Node version — prefix them with
+`source ~/.nvm/nvm.sh && nvm use &&` if needed.
+
 ### Git state
 
 Check that the working tree is ready for a release:
@@ -181,9 +197,11 @@ whether to update it now. Make the suggested edits if the user approves.
 
 ## Stage 5: Build validation
 
-Run the full build pipeline. This is the same sequence as the `/build` skill:
+Run the full build pipeline under the correct Node version. This is the same
+sequence as the `/build` skill:
 
 ```bash
+source ~/.nvm/nvm.sh && nvm use
 npm run build
 npm run lint
 npm test
@@ -195,8 +213,20 @@ All four stages must pass. If any stage fails:
 - Do NOT proceed to publish
 - Ask the user if they want to fix the issues and retry, or abort the release
 
-After a successful package step, note the .vsix filename and size for the
-release report, then clean up: `rm -f *.vsix`
+After a successful package step:
+
+1. **Audit the .vsix contents.** Review the file list printed by `vsce package`.
+   Flag any files that shouldn't ship to users — common offenders include:
+   - Dev config (`.claude/`, `.env`, `skills/`, `.nvmrc`)
+   - Documentation not meant for end users (`docs/`, `Initial-prd.md`, `CLAUDE.md`)
+   - Source files or test fixtures (`src/`, `test-fixtures/`)
+
+   If unexpected files are found, update `.vscodeignore` to exclude them, then
+   re-run `npm run package` to verify the fix before proceeding.
+
+2. Note the .vsix filename and size for the release report.
+
+3. Clean up: `rm -f *.vsix`
 
 ---
 
@@ -255,23 +285,34 @@ After a successful publish, clean up any .vsix files: `rm -f *.vsix`
 ## Stage 8: Tag & push
 
 After successful publish, the version in package.json has been bumped by vsce.
-Read the new version from package.json, then:
+Read the new version from package.json, then fold the version bump into the
+release commit and tag it.
 
 ```bash
 # Stage the vsce-updated package.json (and package-lock.json if changed)
 git add package.json package-lock.json
-git commit --amend --no-edit
 
-# Tag the release
+# Amend the release commit — always pass -m to preserve the message,
+# because --no-edit can lose the message when vsce sets its own.
+git commit --amend -m "Release vX.Y.Z
+
+Update CHANGELOG and prepare for marketplace release.
+Bump version to X.Y.Z for marketplace publish.
+
+Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>"
+
+# Tag the release — delete any existing tag first (vsce sometimes creates one)
+git tag -d v<new-version> 2>/dev/null || true
 git tag v<new-version>
 
 # Push commit and tag
-git push && git push --tags
+git push --force-with-lease && git push --tags
 ```
 
-The amend is intentional here — vsce updated package.json after our release
-commit, and we want the tag to point to a commit that includes the correct
-version number. This is a single atomic release commit.
+The amend is intentional — vsce updated package.json after our release commit,
+and we want the tag to point to a commit that includes the correct version
+number. Using `--force-with-lease` (not `--force`) ensures we don't overwrite
+any concurrent remote changes.
 
 ---
 
