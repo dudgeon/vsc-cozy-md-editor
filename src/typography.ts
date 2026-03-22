@@ -150,10 +150,19 @@ export async function applyTypographyBundle(): Promise<void> {
     const typoConfig = vscode.workspace.getConfiguration('cozyMd.typography');
     const current = typoConfig.inspect<Record<string, unknown>>('customBundles');
     const userValue = current?.globalValue as Record<string, unknown> | undefined;
-    if (!userValue || Object.keys(userValue).length === 0) {
+    // Seed or migrate: write bundles if missing, or rename 'cozy' → 'reader'
+    const needsSeed = !userValue || Object.keys(userValue).length === 0;
+    const needsMigration = userValue && 'cozy' in userValue && !('reader' in userValue);
+    if (needsSeed || needsMigration) {
         await typoConfig.update('customBundles', {
             clean: CLEAN_BUNDLE,
             reader: READER_BUNDLE,
         }, vscode.ConfigurationTarget.Global);
+    }
+
+    // Migrate activeBundle from 'cozy' to 'reader'
+    const activeName = typoConfig.get<string>('activeBundle');
+    if (activeName === 'cozy') {
+        await typoConfig.update('activeBundle', 'reader', vscode.ConfigurationTarget.Global);
     }
 }
