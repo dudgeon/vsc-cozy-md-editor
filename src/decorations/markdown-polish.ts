@@ -91,6 +91,7 @@ const ID_CODE_BLOCK_CONTENT = 'markdown-polish-code-block-content';
 const ID_FRONTMATTER = 'markdown-polish-frontmatter';
 const ID_BLOCKQUOTE_MARKERS = 'markdown-polish-blockquote-markers';
 const ID_BLOCKQUOTE_CONTENT = 'markdown-polish-blockquote-content';
+const ID_TABLE_LINES = 'markdown-polish-table-lines';
 
 // ---------------------------------------------------------------------------
 // Heading styles
@@ -909,6 +910,47 @@ class BlockquoteContentProvider implements DecorationProvider {
 }
 
 // ---------------------------------------------------------------------------
+// TableLinesProvider
+// ---------------------------------------------------------------------------
+
+/**
+ * Provides whole-line regions for markdown table lines (lines containing `|`).
+ * In collapsed state, these get a monospace font via CSS injection so that
+ * pipe-delimited columns actually align visually. This is the iA Writer
+ * approach — auto-switch to monospace for table regions only.
+ */
+class TableLinesProvider implements DecorationProvider {
+    readonly id = ID_TABLE_LINES;
+
+    provideDecorations(editor: vscode.TextEditor): DecoratedRegion[] {
+        const doc = editor.document;
+        const regions: DecoratedRegion[] = [];
+        const fmEnd = detectFrontmatterEnd(doc);
+        let inFencedBlock = false;
+
+        for (let i = 0; i < doc.lineCount; i++) {
+            if (fmEnd !== -1 && i <= fmEnd) { continue; }
+
+            const text = doc.lineAt(i).text;
+            const trimmed = text.trimStart();
+
+            if (trimmed.startsWith('```')) {
+                inFencedBlock = !inFencedBlock;
+                continue;
+            }
+            if (inFencedBlock) { continue; }
+
+            if (text.includes('|')) {
+                const range = new vscode.Range(i, 0, i, text.length);
+                regions.push(makeSimpleRegion(range));
+            }
+        }
+
+        return regions;
+    }
+}
+
+// ---------------------------------------------------------------------------
 // FrontmatterProvider
 // ---------------------------------------------------------------------------
 
@@ -1159,6 +1201,18 @@ export class MarkdownPolishProvider implements vscode.Disposable {
                 BLOCKQUOTE_CONTENT_EXPANDED,
             );
         }
+
+        // Table lines: monospace font so pipe-delimited columns align.
+        // Always registered (not behind a config flag — tables need this to be usable).
+        const tableMonoStyle: vscode.DecorationRenderOptions = {
+            textDecoration: "none; font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', Menlo, Consolas, monospace; font-size: 0.9em",
+            isWholeLine: true,
+        };
+        this.register(
+            new TableLinesProvider(),
+            tableMonoStyle,
+            tableMonoStyle,  // same style expanded — tables should always be monospace
+        );
 
         if (dimFrontmatter) {
             this.register(

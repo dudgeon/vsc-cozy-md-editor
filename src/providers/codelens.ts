@@ -339,14 +339,14 @@ export class MarkdownCraftCodeLensProvider implements vscode.CodeLensProvider {
                             tooltip: 'Add a new row at the bottom of the table',
                         }),
                         new vscode.CodeLens(range, {
-                            title: '＋ Col',
-                            command: 'cozyMd.codeLensAddColumn',
-                            tooltip: 'Add a new column at the right of the table',
-                        }),
-                        new vscode.CodeLens(range, {
                             title: '－ Row',
                             command: 'cozyMd.codeLensDeleteRow',
                             tooltip: 'Delete the current row (cannot delete header)',
+                        }),
+                        new vscode.CodeLens(range, {
+                            title: '＋ Col',
+                            command: 'cozyMd.codeLensAddColumn',
+                            tooltip: 'Add a new column at the right of the table',
                         }),
                         new vscode.CodeLens(range, {
                             title: '－ Col',
