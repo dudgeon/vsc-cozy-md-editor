@@ -286,6 +286,12 @@ export class MarkdownCraftCodeLensProvider implements vscode.CodeLensProvider {
                         tooltip: rejectTitle,
                         arguments: [activeCritic.start],
                     }),
+                    new vscode.CodeLens(codeLensRange, {
+                        title: '\u{1F4AC} Comment',
+                        command: 'cozyMd.addCommentOnChange',
+                        tooltip: 'Add a comment on this change',
+                        arguments: [activeCritic.start],
+                    }),
                     new vscode.CodeLens(codeLensRange, { title: ']', command: '', tooltip: '' }),
                 );
             }

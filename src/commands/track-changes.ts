@@ -1,25 +1,129 @@
 import * as vscode from 'vscode';
+import { diffWords } from 'diff';
 import { parseCriticMarkup, CriticMarkupRange } from '../parsers/criticmarkup';
 
 /**
  * Track changes commands: accept/reject CriticMarkup changes,
- * accept/reject all, and next/previous change navigation.
+ * accept/reject all, next/previous change navigation, and
+ * snapshot+diff track-changes recording.
  */
 
-// ── Helpers ──────────────────────────────────────────────────────────────
+// ── Track Changes Recording State ────────────────────────────────────────
+
+let isTracking = false;
+let snapshot: string | undefined;
+let trackedDocUri: string | undefined;
 
 /**
- * Find the CriticMarkup range that contains the cursor position.
+ * Convert a diff between old and new text into CriticMarkup.
+ *
+ * Uses `diffWords()` from the `diff` package. Adjacent remove+add pairs
+ * are collapsed into substitutions ({~~ old ~> new ~~}).
  */
-function findChangeAtCursor(
-    document: vscode.TextDocument,
-    position: vscode.Position
-): CriticMarkupRange | null {
-    const text = document.getText();
-    const offset = document.offsetAt(position);
-    const ranges = parseCriticMarkup(text);
-    return ranges.find(r => offset >= r.start && offset <= r.end) || null;
+function generateCriticMarkup(oldText: string, newText: string): string {
+    const changes = diffWords(oldText, newText);
+    let result = '';
+    for (let i = 0; i < changes.length; i++) {
+        const change = changes[i];
+        if (change.added) {
+            result += `{++${change.value}++}`;
+        } else if (change.removed) {
+            // Check if next change is an addition (substitution pattern)
+            const next = changes[i + 1];
+            if (next && next.added) {
+                result += `{~~${change.value}~>${next.value}~~}`;
+                i++; // skip the addition, consumed as substitution
+            } else {
+                result += `{--${change.value}--}`;
+            }
+        } else {
+            result += change.value;
+        }
+    }
+    return result;
 }
+
+/**
+ * Start tracking changes: snapshot the document and set state.
+ */
+function startTracking(editor: vscode.TextEditor): void {
+    snapshot = editor.document.getText();
+    trackedDocUri = editor.document.uri.toString();
+    isTracking = true;
+    vscode.commands.executeCommand('setContext', 'cozyMd.isTrackingChanges', true);
+    vscode.window.showInformationMessage('Track Changes: ON — edit freely, then press Done or Cancel.');
+}
+
+/**
+ * Commit tracked changes: diff snapshot against current text, generate
+ * CriticMarkup, and replace document content in a single `editor.edit()`.
+ */
+async function commitTracking(editor: vscode.TextEditor): Promise<void> {
+    if (!isTracking || snapshot === undefined) {
+        vscode.window.showWarningMessage('Track changes is not active.');
+        return;
+    }
+
+    // Ensure we're operating on the same document
+    if (editor.document.uri.toString() !== trackedDocUri) {
+        vscode.window.showWarningMessage('Track changes is active on a different document.');
+        return;
+    }
+
+    const currentText = editor.document.getText();
+
+    // If nothing changed, just stop tracking
+    if (currentText === snapshot) {
+        clearTrackingState();
+        vscode.window.showInformationMessage('Track Changes: no changes detected.');
+        return;
+    }
+
+    const criticMarkupText = generateCriticMarkup(snapshot, currentText);
+
+    // Replace the entire document content in a single edit so Cmd+Z undoes
+    // the whole CriticMarkup generation at once.
+    const fullRange = new vscode.Range(
+        editor.document.positionAt(0),
+        editor.document.positionAt(currentText.length)
+    );
+
+    const success = await editor.edit(editBuilder => {
+        editBuilder.replace(fullRange, criticMarkupText);
+    });
+
+    if (success) {
+        clearTrackingState();
+        vscode.window.showInformationMessage('Track Changes: changes committed as CriticMarkup.');
+    } else {
+        vscode.window.showErrorMessage('Track Changes: failed to apply CriticMarkup.');
+    }
+}
+
+/**
+ * Cancel tracking: clear state without generating CriticMarkup.
+ * Edits remain as-is in the document.
+ */
+function cancelTracking(): void {
+    if (!isTracking) {
+        vscode.window.showInformationMessage('Track changes is not active.');
+        return;
+    }
+    clearTrackingState();
+    vscode.window.showInformationMessage('Track Changes: cancelled. Edits remain as-is.');
+}
+
+/**
+ * Clear all tracking state and update the `when`-clause context.
+ */
+function clearTrackingState(): void {
+    isTracking = false;
+    snapshot = undefined;
+    trackedDocUri = undefined;
+    vscode.commands.executeCommand('setContext', 'cozyMd.isTrackingChanges', false);
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────
 
 /**
  * Compute the replacement text when accepting a CriticMarkup range.
@@ -232,6 +336,74 @@ export function registerTrackChangesCommands(context: vscode.ExtensionContext): 
                     new vscode.Range(pos, pos),
                     vscode.TextEditorRevealType.InCenterIfOutsideViewport
                 );
+            }
+        )
+    );
+
+    // ── Track Changes Recording Commands ─────────────────────────────────
+
+    // Toggle track changes (start tracking, or commit if already tracking)
+    context.subscriptions.push(
+        vscode.commands.registerTextEditorCommand(
+            'cozyMd.toggleTrackChanges',
+            async (editor: vscode.TextEditor) => {
+                if (!isTracking) {
+                    startTracking(editor);
+                } else {
+                    await commitTracking(editor);
+                }
+            }
+        )
+    );
+
+    // Done — commit tracked changes as CriticMarkup
+    context.subscriptions.push(
+        vscode.commands.registerTextEditorCommand(
+            'cozyMd.commitTrackChanges',
+            async (editor: vscode.TextEditor) => {
+                await commitTracking(editor);
+            }
+        )
+    );
+
+    // Cancel — stop tracking without generating CriticMarkup
+    context.subscriptions.push(
+        vscode.commands.registerCommand(
+            'cozyMd.cancelTrackChanges',
+            () => {
+                cancelTracking();
+            }
+        )
+    );
+
+    // ── Add Comment on Change (CodeLens command) ─────────────────────────
+
+    // Inserts a CriticMarkup comment {>>  <<} right after the CriticMarkup
+    // range at the given offset, and positions cursor between the delimiters.
+    context.subscriptions.push(
+        vscode.commands.registerTextEditorCommand(
+            'cozyMd.addCommentOnChange',
+            async (editor: vscode.TextEditor, _edit: vscode.TextEditorEdit, ...args: unknown[]) => {
+                const change = findChangeByOffsetOrCursor(editor, args[0]);
+                if (!change) {
+                    vscode.window.showInformationMessage('No CriticMarkup change at cursor.');
+                    return;
+                }
+
+                // Insert {>>  <<} right after the closing delimiter of the range
+                const insertPos = editor.document.positionAt(change.end);
+                const commentText = '{>>  <<}';
+
+                const success = await editor.edit(editBuilder => {
+                    editBuilder.insert(insertPos, commentText);
+                });
+
+                if (success) {
+                    // Position cursor between the delimiters: after "{>> " (4 chars)
+                    const cursorOffset = change.end + 4;
+                    const cursorPos = editor.document.positionAt(cursorOffset);
+                    editor.selection = new vscode.Selection(cursorPos, cursorPos);
+                }
             }
         )
     );

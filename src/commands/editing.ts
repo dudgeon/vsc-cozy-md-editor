@@ -502,63 +502,6 @@ function findParentListType(
     return null;
 }
 
-/**
- * Replace the list marker on a single line to match the parent list type.
- *
- * `lineIndex` must refer to a line that is already a list item (matches
- * ANY_LIST_RE) at its new indent level.  The function computes the
- * replacement text and appends the replacement to `replacements` (an array
- * of {range, text} pairs) so the caller can apply them in a single
- * `editor.edit` pass.
- */
-function buildMarkerReplacement(
-    document: vscode.TextDocument,
-    lineIndex: number,
-    parentInfo: { type: 'bullet'; marker: string } | { type: 'ordered'; nextNumber: number } | { type: 'task' },
-): { range: vscode.Range; text: string } | null {
-    const text = document.lineAt(lineIndex).text;
-    const indent = text.length - text.trimStart().length;
-    const indentStr = text.substring(0, indent);
-
-    // Detect the current marker + content on this line
-    const taskMatch = text.match(TASK_RE);
-    const orderedMatch = text.match(ORDERED_RE);
-    const bulletMatch = text.match(BULLET_RE);
-
-    let content: string;
-
-    if (taskMatch) {
-        content = taskMatch[3];
-    } else if (orderedMatch) {
-        content = orderedMatch[3];
-    } else if (bulletMatch) {
-        content = bulletMatch[3];
-    } else {
-        return null; // not a list line — shouldn't happen
-    }
-
-    // Build the new marker text (does NOT include leading indent — that's
-    // already correct after the outdent edit removed whitespace)
-    let newMarker: string;
-    switch (parentInfo.type) {
-        case 'ordered':
-            newMarker = `${parentInfo.nextNumber}. `;
-            break;
-        case 'bullet':
-            newMarker = `${parentInfo.marker} `;
-            break;
-        case 'task':
-            newMarker = '- [ ] ';
-            break;
-    }
-
-    // Build full replacement line (indent + newMarker + content)
-    const newLine = `${indentStr}${newMarker}${content}`;
-    const fullRange = document.lineAt(lineIndex).range;
-
-    return { range: fullRange, text: newLine };
-}
-
 // ────────────────────────────────────────────
 // Shift+Tab key handler (unified: table nav > list outdent > default)
 // ────────────────────────────────────────────
@@ -688,13 +631,52 @@ async function outdentLines(editor: vscode.TextEditor): Promise<void> {
 }
 
 // ────────────────────────────────────────────
-// Stub: CriticMarkup comment (reserved keybinding)
+// CriticMarkup comment command (Cmd+Alt+M)
 // ────────────────────────────────────────────
 
-function addCriticComment(): void {
-    vscode.window.showInformationMessage(
-        'CriticMarkup comments coming in a future update',
-    );
+/**
+ * Insert a CriticMarkup comment at the cursor or around the selection.
+ * - If text is selected: wrap with `{>>` and `<<}`, cursor after `{>>`
+ * - If no selection: insert `{>>  <<}` at cursor, cursor between delimiters
+ */
+async function addCriticComment(editor: vscode.TextEditor): Promise<void> {
+    const selection = editor.selection;
+
+    if (selection.isEmpty) {
+        // No selection — insert empty comment at cursor
+        const pos = selection.active;
+        const commentText = '{>>  <<}';
+
+        const success = await editor.edit(editBuilder => {
+            editBuilder.insert(pos, commentText);
+        });
+
+        if (success) {
+            // Position cursor between the delimiters: after "{>> " (4 chars)
+            const cursorPos = new vscode.Position(
+                pos.line,
+                pos.character + 4
+            );
+            editor.selection = new vscode.Selection(cursorPos, cursorPos);
+        }
+    } else {
+        // Text is selected — wrap selection with comment delimiters
+        const selectedText = editor.document.getText(selection);
+        const wrappedText = `{>>${selectedText}<<}`;
+
+        const success = await editor.edit(editBuilder => {
+            editBuilder.replace(selection, wrappedText);
+        });
+
+        if (success) {
+            // Position cursor right after the opening `{>>` (3 chars from start)
+            const cursorPos = new vscode.Position(
+                selection.start.line,
+                selection.start.character + 3
+            );
+            editor.selection = new vscode.Selection(cursorPos, cursorPos);
+        }
+    }
 }
 
 // ────────────────────────────────────────────
@@ -723,9 +705,9 @@ export function registerEditingCommands(context: vscode.ExtensionContext): void 
             'cozyMd.outdentLines',
             (editor) => { outdentLines(editor); },
         ),
-        vscode.commands.registerCommand(
+        vscode.commands.registerTextEditorCommand(
             'cozyMd.addCriticComment',
-            addCriticComment,
+            (editor) => { addCriticComment(editor); },
         ),
     );
 }

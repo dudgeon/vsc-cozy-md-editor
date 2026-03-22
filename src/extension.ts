@@ -9,6 +9,7 @@ import { registerEditingCommands } from './commands/editing';
 import { MarkdownCraftCodeLensProvider, registerTableCodeLensCommands } from './providers/codelens';
 import { CriticMarkupDecorationProvider } from './decorations/criticmarkup';
 import { registerTrackChangesCommands } from './commands/track-changes';
+import { registerClaudeCommands } from './commands/claude';
 
 let decorationManager: DecorationManager | undefined;
 
@@ -53,7 +54,15 @@ export function activate(context: vscode.ExtensionContext): void {
     // Phase 2: CodeLens provider now includes CriticMarkup accept/reject (in codelens.ts)
     // Phase 3: Track changes commands (accept/reject, navigation)
     registerTrackChangesCommands(context);
+    // Phase 3: Toggle preview (one-line wrapper)
+    context.subscriptions.push(
+        vscode.commands.registerCommand('cozyMd.togglePreview', () => {
+            vscode.commands.executeCommand('markdown.showPreviewToSide');
+        })
+    );
+
     // Phase 3: Register Claude dispatch commands
+    registerClaudeCommands(context);
 }
 
 export function deactivate(): void {

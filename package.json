@@ -25,17 +25,12 @@
   },
   "dependencies": {
     "diff": "^5.1.0",
-    "markdown-it": "^14.0.0",
-    "picomatch": "^3.0.1",
-    "vscode-uri": "^3.0.8",
     "yaml": "^2.3.4"
   },
   "devDependencies": {
     "@types/diff": "^5.0.9",
-    "@types/markdown-it": "^13.0.7",
     "@types/mocha": "^10.0.6",
     "@types/node": "^20.11.0",
-    "@types/picomatch": "^2.3.3",
     "@types/vscode": "^1.85.0",
     "@typescript-eslint/eslint-plugin": "^6.19.0",
     "@typescript-eslint/parser": "^6.19.0",
@@ -113,11 +108,17 @@
       {
         "command": "cozyMd.toggleTrackChanges",
         "title": "Toggle Track Changes",
+        "category": "Cozy MD",
+        "icon": "$(diff)"
+      },
+      {
+        "command": "cozyMd.commitTrackChanges",
+        "title": "Save Tracked Changes",
         "category": "Cozy MD"
       },
       {
-        "command": "cozyMd.addComment",
-        "title": "Add Comment",
+        "command": "cozyMd.cancelTrackChanges",
+        "title": "Cancel Track Changes",
         "category": "Cozy MD"
       },
       {
@@ -166,21 +167,6 @@
         "category": "Cozy MD"
       },
       {
-        "command": "cozyMd.addToContextBuffer",
-        "title": "Add to Context Buffer",
-        "category": "Cozy MD"
-      },
-      {
-        "command": "cozyMd.dispatchContextBuffer",
-        "title": "Dispatch Context Buffer",
-        "category": "Cozy MD"
-      },
-      {
-        "command": "cozyMd.clearContextBuffer",
-        "title": "Clear Context Buffer",
-        "category": "Cozy MD"
-      },
-      {
         "command": "cozyMd.onEnterKey",
         "title": "Enter Key (List/Quote Continuation)",
         "category": "Cozy MD"
@@ -216,17 +202,27 @@
         {
           "command": "cozyMd.togglePreview",
           "when": "resourceLangId == markdown",
-          "group": "navigation"
+          "group": "navigation@4"
         },
         {
           "command": "cozyMd.toggleTrackChanges",
-          "when": "resourceLangId == markdown",
-          "group": "navigation"
+          "when": "resourceLangId == markdown && !cozyMd.isTrackingChanges",
+          "group": "navigation@3"
+        },
+        {
+          "command": "cozyMd.commitTrackChanges",
+          "when": "resourceLangId == markdown && cozyMd.isTrackingChanges",
+          "group": "navigation@2"
+        },
+        {
+          "command": "cozyMd.cancelTrackChanges",
+          "when": "resourceLangId == markdown && cozyMd.isTrackingChanges",
+          "group": "navigation@3"
         },
         {
           "command": "cozyMd.saveIndicator",
           "when": "resourceLangId == markdown",
-          "group": "navigation"
+          "group": "navigation@5"
         }
       ],
       "editor/context": [
@@ -239,11 +235,6 @@
           "command": "cozyMd.insertBlock",
           "when": "resourceLangId == markdown",
           "group": "cozyMd@2"
-        },
-        {
-          "command": "cozyMd.addComment",
-          "when": "resourceLangId == markdown && editorHasSelection",
-          "group": "cozyMd@3"
         },
         {
           "command": "cozyMd.acceptChange",
@@ -408,12 +399,6 @@
         "key": "ctrl+shift+t",
         "mac": "cmd+shift+t",
         "when": "resourceLangId == markdown"
-      },
-      {
-        "command": "cozyMd.addComment",
-        "key": "ctrl+alt+c",
-        "mac": "cmd+alt+c",
-        "when": "resourceLangId == markdown && editorHasSelection"
       },
       {
         "command": "cozyMd.insertFrontmatter",
