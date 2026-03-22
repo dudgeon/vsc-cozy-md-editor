@@ -85,29 +85,7 @@ Use Snapshot + Diff approach (see Decision Log in CLAUDE.md for rationale).
 
 ## Future Phases
 
-### Phase 4 — Claude as Collaborator
-- Context buffer: stage selections, dispatch with prompt
-- Rewrite selection with Claude + diff view
-- Safe concurrent editing research:
-  - Unsaved changes conflict (user has unsaved edits, Claude modifies file
-    on disk → VS Code shows "file changed" dialog — can we merge?)
-  - Stale file sent to Claude (user hasn't saved → Claude works on old
-    content — auto-save before dispatch, or warn?)
-  - Claude overwrites user edits (Claude writes while user is editing →
-    in-memory changes lost on reload — can `onDidChangeTextDocument` detect
-    external changes and snapshot/diff as tracked changes?)
-  - VS Code API constraints: `workspace.fs.onDidChange` fires for disk
-    changes, but merging into editor buffer without losing undo is hard
-  - Note: Claude can use CriticMarkup directly if prompted. File watcher
-    is complementary, not required.
-
-### Phase 5 — Agentic Workflows
-- @claude annotation detection (CodeLens)
-- Single/batch annotation dispatch
-- CriticMarkup round-trip to Claude as revision checklist
-- Conflict detection: dirty-buffer awareness when file watcher fires
-
-### Phase 6 — UX Polish
+### Phase 4 — UX Polish (was Phase 6)
 - Light/dark mode toggle button in editor title bar
 - Theme-awareness across all decorations
 - Nested ordered list numbering + config (research Typora a/i convention)
@@ -118,11 +96,31 @@ Use Snapshot + Diff approach (see Decision Log in CLAUDE.md for rationale).
 - Table column width improvements (monospace scoping investigation)
 - Cmd+K conflict documentation (intercepts VS Code chord prefix)
 
-### Phase 7 — Google Workspace Sync
+### Phase 5 — Google Workspace Sync (was Phase 7)
 - Gated on gws-cli availability
 - No-regrets items (frontmatter URL pairing) can land any time
-- Manual sync with smart diffing (Phase 7a)
-- Automated sync via CLI (Phase 7b)
+- Manual sync with smart diffing (Phase 5a)
+- Automated sync via CLI (Phase 5b)
+
+### Deferred — Needs Research / User Validation
+
+**Claude as Collaborator** (was Phase 4):
+All three items deferred. User need not validated for context buffer and
+rewrite; concurrent editing is complex and needs research before scoping.
+- ~~Context buffer~~ — stage selections, dispatch with prompt. Deferred:
+  unclear what user problem this solves.
+- ~~Rewrite selection with Claude~~ — select text, Claude rewrites, diff
+  view. Deferred: same reason.
+- **Safe concurrent editing** — research spike in progress. See
+  `docs/research-concurrent-editing.md` when available. Key questions:
+  what happens when Claude edits a file the user has open? What VS Code
+  APIs are available? Is prompting Claude to use CriticMarkup sufficient?
+
+**Agentic Workflows** (was Phase 5):
+- @claude annotation detection (CodeLens)
+- Single/batch annotation dispatch
+- CriticMarkup round-trip to Claude as revision checklist
+- Conflict detection: dirty-buffer awareness when file watcher fires
 
 ---
 

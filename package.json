@@ -4,11 +4,35 @@
   "description": "A friendly VS Code extension for markdown editing with CriticMarkup track changes and Claude Code integration.",
   "version": "0.1.0",
   "publisher": "dudgeon",
+  "license": "MIT",
+  "icon": "icon.png",
+  "galleryBanner": {
+    "color": "#1e1e2e",
+    "theme": "dark"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dudgeon/vsc-cozy-md-editor"
+  },
+  "homepage": "https://github.com/dudgeon/vsc-cozy-md-editor#readme",
+  "bugs": {
+    "url": "https://github.com/dudgeon/vsc-cozy-md-editor/issues"
+  },
   "engines": {
     "vscode": "^1.85.0"
   },
   "categories": [
+    "Formatters",
     "Other"
+  ],
+  "keywords": [
+    "markdown",
+    "editor",
+    "wysiwyg",
+    "criticmarkup",
+    "track changes",
+    "frontmatter",
+    "tables"
   ],
   "main": "./dist/extension.js",
   "activationEvents": [
@@ -167,6 +191,21 @@
         "category": "Cozy MD"
       },
       {
+        "command": "cozyMd.themeToDark",
+        "title": "Theme: Light",
+        "category": "Cozy MD"
+      },
+      {
+        "command": "cozyMd.themeToAuto",
+        "title": "Theme: Dark",
+        "category": "Cozy MD"
+      },
+      {
+        "command": "cozyMd.themeToLight",
+        "title": "Theme: Auto",
+        "category": "Cozy MD"
+      },
+      {
         "command": "cozyMd.onEnterKey",
         "title": "Enter Key (List/Quote Continuation)",
         "category": "Cozy MD"
@@ -223,6 +262,21 @@
           "command": "cozyMd.saveIndicator",
           "when": "resourceLangId == markdown",
           "group": "navigation@5"
+        },
+        {
+          "command": "cozyMd.themeToDark",
+          "when": "resourceLangId == markdown && cozyMd.themeMode == light",
+          "group": "navigation@6"
+        },
+        {
+          "command": "cozyMd.themeToAuto",
+          "when": "resourceLangId == markdown && cozyMd.themeMode == dark",
+          "group": "navigation@6"
+        },
+        {
+          "command": "cozyMd.themeToLight",
+          "when": "resourceLangId == markdown && cozyMd.themeMode == auto",
+          "group": "navigation@6"
         }
       ],
       "editor/context": [

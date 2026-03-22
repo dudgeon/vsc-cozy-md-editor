@@ -63,6 +63,52 @@ export function activate(context: vscode.ExtensionContext): void {
 
     // Phase 3: Register Claude dispatch commands
     registerClaudeCommands(context);
+
+    // Phase 4: Light/dark mode toggle (cycles Light → Dark → Auto)
+    // Uses setContext to swap which button label is visible in the toolbar.
+    function updateThemeContext(): void {
+        const autoDetect = vscode.workspace.getConfiguration('window')
+            .get<boolean>('autoDetectColorScheme', false);
+        if (autoDetect) {
+            vscode.commands.executeCommand('setContext', 'cozyMd.themeMode', 'auto');
+        } else {
+            const theme = vscode.workspace.getConfiguration('workbench')
+                .get<string>('colorTheme', '');
+            const isLight = theme.toLowerCase().includes('light');
+            vscode.commands.executeCommand('setContext', 'cozyMd.themeMode', isLight ? 'light' : 'dark');
+        }
+    }
+    updateThemeContext();
+
+    // Listen for theme/setting changes to keep context in sync
+    context.subscriptions.push(
+        vscode.workspace.onDidChangeConfiguration(e => {
+            if (e.affectsConfiguration('workbench.colorTheme') ||
+                e.affectsConfiguration('window.autoDetectColorScheme')) {
+                updateThemeContext();
+            }
+        })
+    );
+
+    // Three commands, one per state → each shows what clicking will switch TO
+    context.subscriptions.push(
+        vscode.commands.registerCommand('cozyMd.themeToDark', async () => {
+            await vscode.workspace.getConfiguration('window')
+                .update('autoDetectColorScheme', false, vscode.ConfigurationTarget.Global);
+            await vscode.workspace.getConfiguration('workbench')
+                .update('colorTheme', 'Default Dark Modern', vscode.ConfigurationTarget.Global);
+        }),
+        vscode.commands.registerCommand('cozyMd.themeToAuto', async () => {
+            await vscode.workspace.getConfiguration('window')
+                .update('autoDetectColorScheme', true, vscode.ConfigurationTarget.Global);
+        }),
+        vscode.commands.registerCommand('cozyMd.themeToLight', async () => {
+            await vscode.workspace.getConfiguration('window')
+                .update('autoDetectColorScheme', false, vscode.ConfigurationTarget.Global);
+            await vscode.workspace.getConfiguration('workbench')
+                .update('colorTheme', 'Default Light Modern', vscode.ConfigurationTarget.Global);
+        }),
+    );
 }
 
 export function deactivate(): void {
