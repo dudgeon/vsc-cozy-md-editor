@@ -61,6 +61,44 @@ Every agent working on this project must update CLAUDE.md if their work changes
 the current state, introduces a known issue, or deviates from the documented
 plan. The roadmap and Known Issues sections are living documents, not snapshots.
 
+### Log Decisions
+When a dependency is added or removed, a technical approach is chosen over an
+alternative, or a PRD assumption is overridden by implementation reality — add
+an entry to the Decision Log below. Future agents should check this log before
+re-investigating settled questions. Include: what was decided, what was rejected,
+and why.
+
+## Decision Log
+Decisions made during implementation that override or refine the original PRD.
+
+- **Hand-written parsers over markdown-it** (Phase 1): The PRD specified
+  `markdown-it` for table boundary detection. Implementation used hand-written
+  regex parsers for tables, CriticMarkup, and frontmatter instead. Reason:
+  hand-written parsers handle serialization, alignment preservation, and line-
+  number tracking directly — markdown-it would require AST transformation.
+  `markdown-it` dependency removed as dead weight.
+- **Snapshot+Diff over real-time wrapping for track changes** (Phase 3 planning):
+  Real-time `onDidChangeTextDocument` wrapping was rejected because VS Code's
+  `undoStopBefore/After` has been broken since 2017 (Issue #38535), causing
+  Cmd+Z to require two presses. Snapshot+Diff approach: snapshot on toggle-on,
+  `diffWords()` on commit, single `editor.edit()` for CriticMarkup generation.
+  Undo works perfectly. ~100 lines vs ~400 lines. Every comparable tool (VS
+  Code Git SCM, GitLens, Overleaf, Scrivener) uses snapshot+diff.
+- **Cmd+Alt+M for comments** (Phase 3 planning): PRD declared both
+  `addComment` (Cmd+Alt+C) and `addCriticComment` (Cmd+Alt+M). Consolidated
+  to a single command on Cmd+Alt+M per user preference.
+- **CodeLens for controls, not styled badges** (Phase 2): CodeLens API does
+  not support custom colors/backgrounds. Using unicode prefixes (✓/✗/▦) and
+  bracket wrappers as visual anchors. Inline styled badges via `after` pseudo-
+  element decorations are a Phase 6 upgrade path.
+- **Blockquote markers dimmed, not hidden** (Phase 1.5): `letterSpacing: '-1em'`
+  for hiding characters causes column misalignment on soft-wrapped lines.
+  Blockquote `> ` markers use opacity dimming instead. Short inline markers
+  (bold `**`, backticks) are safe to hide since they don't soft-wrap.
+- **`border-left` via textDecoration is not viable** (Phase 1.6): Renders as
+  literal pipe `|` characters. Blockquote visual treatment uses italic +
+  subtle backgroundColor instead.
+
 ## Technical Decisions
 - TypeScript, esbuild bundler, VS Code Extension API
 - All features operate on the NATIVE text editor — no custom webview editors
@@ -70,7 +108,9 @@ plan. The roadmap and Known Issues sections are living documents, not snapshots.
 - Frontmatter parser must READ both formats (compatibility) but WRITE code fences only
 - Use `yaml` npm package for frontmatter parsing (preserves comments)
 - CriticMarkup parser is hand-written regex (no npm library exists)
-- Table parser is hand-written (not using markdown-it)
+- Table parser is hand-written (not using markdown-it — the PRD originally
+  planned to use markdown-it for table detection, but hand-written parsing
+  proved simpler and better suited for serialization/alignment needs)
 - All decorations use `editor.setDecorations` with `DecorationRenderOptions`
 - Claude Code dispatch uses `vscode.window.createTerminal` + `sendText`
 - Google Docs/Sheets pairing uses frontmatter URL fields, not a sidecar database
@@ -216,26 +256,33 @@ The `skills/` directory contains Claude Code skills for this project:
 
 ### Technical debt
 - `buildMarkerReplacement()` in `editing.ts` — dead code from old two-phase
-  outdent approach, replaced by inline logic
+  outdent approach, replaced by inline logic. Safe to remove.
 - `findChangeAtCursor()` in `track-changes.ts` — dead code, replaced by
-  `findChangeByOffsetOrCursor()`
-- Some `textDecoration` CSS injection TODOs should be resolved (validated or
-  removed) rather than left as open questions
-- `markdown-it` listed as dependency but never imported — table parser is
-  hand-written. Consider removing the dep.
-- 10+ package.json commands declared but unregistered (saveIndicator,
-  togglePreview, insertBlock, toggleTrackChanges, Claude commands) — these
-  are placeholders for future phases but currently show as broken commands
-  in the command palette
+  `findChangeByOffsetOrCursor()`. Safe to remove.
+- Unused dependencies: `markdown-it` (superseded by hand-written parsers),
+  `picomatch` (intended for Phase 4/5 file watcher, no consumers),
+  `vscode-uri` (redundant with `vscode.Uri` at runtime). All safe to remove.
+  `diff` is also unused today but will be needed for Phase 3 — keep or
+  remove and re-add.
+- Package.json commands from the initial scaffolding: 10 commands were
+  declared upfront for the full PRD roadmap. 7 belong to Phase 1/3 (keep):
+  saveIndicator, togglePreview, insertBlock, toggleTrackChanges,
+  askClaudeAboutFile, askClaudeAboutSelection, sendFileToClaudeContext.
+  3 belong to Phase 4 (remove until then): addToContextBuffer,
+  dispatchContextBuffer, clearContextBuffer. `togglePreview` is trivial to
+  implement (one-line wrapper around `markdown.showPreviewToSide`).
+- `addComment` (Cmd+Alt+C) should be removed — consolidated to
+  `addCriticComment` on Cmd+Alt+M per user preference. Remove the
+  Cmd+Alt+C keybinding and `comments.ts` stub in Phase 3.
 
 ## Open Issues
 
-### High priority (fix before moving to Phase 3)
+### High priority (fix in Phase 3)
 1. **Outdent list type inheritance — corner cases** — renumber subsequent
    items, deeply nested mixed lists (3+ levels), task list outdenting.
-2. **Unregistered commands in package.json** — 10+ commands show in command
-   palette but do nothing. Either register stubs or remove from package.json
-   until implemented.
+2. **Unregistered commands in package.json** — 10 commands from initial
+   scaffolding. Plan: remove 3 Phase 4 commands now, implement
+   `togglePreview` (trivial), keep remaining 6 for Phase 3 implementation.
 
 ### Medium priority (UX polish, Phase 6)
 3. **Nested ordered list numbering** — sub-levels show 1/2/3 at every depth.
@@ -278,9 +325,30 @@ The `skills/` directory contains Claude Code skills for this project:
 
 ### Up next
 - **Phase 3**: Track Changes Recording + Comments + Simple Claude dispatch
-  Record edits as CriticMarkup (insertions → `{++ ++}`, deletions → `{-- --}`),
-  implement comment command (Cmd+Alt+M wraps with `{>> <<}`), basic Claude
-  Code terminal dispatch.
+  1. **Track Changes Recording** — use Snapshot + Diff approach (not real-time
+     `onDidChangeTextDocument`). User toggles "Track Changes" on (Cmd+Shift+T),
+     extension snapshots the document. User edits normally — undo/redo
+     untouched. On toggle-off or save, `diffWords(snapshot, current)` from
+     the `diff` package generates CriticMarkup. Single `editor.edit()` to
+     replace content. Single Cmd+Z undoes the entire CriticMarkup generation.
+     Rationale: `undoStopBefore/After` is broken in VS Code since 2017; real-
+     time wrapping requires ~400 lines of fragile state management and breaks
+     undo. Snapshot+diff is ~100 lines and undo works perfectly.
+  2. **Comment command** — consolidate `addComment` and `addCriticComment`
+     into a single `cozyMd.addComment` command bound to Cmd+Alt+M. Wraps
+     selection with `{>> <<}`. Remove the Cmd+Alt+C binding.
+  2b. **"Add Comment" on tracked change CodeLens** — when cursor is inside
+     a CriticMarkup range, the Accept/Reject CodeLens should also show an
+     "Add Comment" button that appends `{>> comment <<}` after the tracked
+     change. This lets reviewers annotate why they accept/reject.
+  3. **Simple Claude dispatch** — `askClaudeAboutFile`, `askClaudeAboutSelection`,
+     `sendFileToClaudeContext` via `vscode.window.createTerminal` + `sendText`.
+  4. **Quick wins** — implement `togglePreview` (one-line wrapper around
+     `markdown.showPreviewToSide`), register `toggleTrackChanges` toggle.
+  5. **Cleanup** — remove Phase 4 commands from package.json (addToContextBuffer,
+     dispatchContextBuffer, clearContextBuffer), remove dead code
+     (`buildMarkerReplacement`, `findChangeAtCursor`), remove unused deps
+     (`markdown-it`, `picomatch`, `vscode-uri`).
 
 ### Future
 - **Phase 4**: Claude as Collaborator — context buffer, rewrite commands,
