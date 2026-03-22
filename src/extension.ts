@@ -40,7 +40,7 @@ export function activate(context: vscode.ExtensionContext): void {
     applyTypographyBundle();
     context.subscriptions.push(
         vscode.workspace.onDidChangeConfiguration(e => {
-            if (e.affectsConfiguration('cozyMd.typography.activeBundle')) {
+            if (e.affectsConfiguration('cozyMd.typography')) {
                 applyTypographyBundle();
             }
         })

@@ -26,7 +26,7 @@ export interface TypographyBundle {
 // ---------------------------------------------------------------------------
 
 /**
- * Clean bundle — knowledge work default.
+ * Clean bundle — knowledge work.
  * Inter for everything, tight heading sizes, strong weight contrast.
  */
 export const CLEAN_BUNDLE: TypographyBundle = {
@@ -42,7 +42,6 @@ export const CLEAN_BUNDLE: TypographyBundle = {
 /**
  * Cozy bundle — literary/editorial writing.
  * Newsreader headings (serif), Plus Jakarta Sans body (geometric sans).
- * Heading fonts must be installed on the user's system.
  */
 export const COZY_BUNDLE: TypographyBundle = {
     bodyFont: "'Plus Jakarta Sans', 'Avenir Next', -apple-system, 'Helvetica Neue', sans-serif",
@@ -54,18 +53,73 @@ export const COZY_BUNDLE: TypographyBundle = {
     h3: { size: '1em', weight: '500', style: 'italic' },
 };
 
+const BUILT_IN_BUNDLES: Record<string, TypographyBundle> = {
+    clean: CLEAN_BUNDLE,
+    cozy: COZY_BUNDLE,
+};
+
 // ---------------------------------------------------------------------------
 // Bundle Lookup
 // ---------------------------------------------------------------------------
 
 /**
+ * Merge a partial user-defined bundle with the clean bundle defaults.
+ * Any property not specified by the user falls back to the clean bundle.
+ */
+function mergeWithDefaults(partial: Record<string, unknown>): TypographyBundle {
+    const base = CLEAN_BUNDLE;
+
+    const mergeHeading = (
+        baseH: HeadingStyle,
+        userH?: Record<string, unknown>,
+    ): HeadingStyle => {
+        if (!userH) return baseH;
+        return {
+            size: typeof userH.size === 'string' ? userH.size : baseH.size,
+            weight: typeof userH.weight === 'string' ? userH.weight : baseH.weight,
+            letterSpacing: typeof userH.letterSpacing === 'string' ? userH.letterSpacing : baseH.letterSpacing,
+            style: typeof userH.style === 'string' ? userH.style : baseH.style,
+        };
+    };
+
+    return {
+        bodyFont: typeof partial.bodyFont === 'string' ? partial.bodyFont : base.bodyFont,
+        headingFont: typeof partial.headingFont === 'string' ? partial.headingFont : base.headingFont,
+        bodySize: typeof partial.bodySize === 'number' ? partial.bodySize : base.bodySize,
+        bodyLineHeight: typeof partial.bodyLineHeight === 'number' ? partial.bodyLineHeight : base.bodyLineHeight,
+        h1: mergeHeading(base.h1, partial.h1 as Record<string, unknown> | undefined),
+        h2: mergeHeading(base.h2, partial.h2 as Record<string, unknown> | undefined),
+        h3: mergeHeading(base.h3, partial.h3 as Record<string, unknown> | undefined),
+    };
+}
+
+/**
  * Look up the active typography bundle from user configuration.
- * Returns the matching built-in bundle, defaulting to Clean.
+ *
+ * Resolution order:
+ * 1. If the name matches a built-in bundle ("clean", "cozy"), return it
+ * 2. If the name matches a key in `cozyMd.typography.customBundles`, merge
+ *    that bundle with clean defaults and return it
+ * 3. Fall back to the cozy bundle (the default)
  */
 export function getActiveBundle(): TypographyBundle {
-    const name = vscode.workspace.getConfiguration('cozyMd.typography')
-        .get<string>('activeBundle', 'cozy');
-    return name === 'clean' ? CLEAN_BUNDLE : COZY_BUNDLE;
+    const config = vscode.workspace.getConfiguration('cozyMd.typography');
+    const name = config.get<string>('activeBundle', 'cozy');
+
+    // Check custom bundles first (includes the built-in defaults which are
+    // externalized into the setting so users can see and edit them)
+    const customBundles = config.get<Record<string, Record<string, unknown>>>('customBundles', {});
+    if (name in customBundles) {
+        return mergeWithDefaults(customBundles[name]);
+    }
+
+    // Fall back to hardcoded built-ins (in case customBundles was cleared)
+    if (name in BUILT_IN_BUNDLES) {
+        return BUILT_IN_BUNDLES[name];
+    }
+
+    // Ultimate fallback
+    return COZY_BUNDLE;
 }
 
 // ---------------------------------------------------------------------------
@@ -76,15 +130,12 @@ export function getActiveBundle(): TypographyBundle {
  * Apply the active typography bundle to the `[markdown]` language-scoped
  * editor settings at the Global (User) level.
  *
- * Called on activation and whenever `cozyMd.typography.activeBundle` changes.
+ * Called on activation and whenever typography config changes.
  */
 export async function applyTypographyBundle(): Promise<void> {
     const bundle = getActiveBundle();
 
     const config = vscode.workspace.getConfiguration();
-    // VS Code's language-scoped overrides use the `[markdown]` key.
-    // Passing the whole object replaces the override block, so we merge with
-    // any existing values the user may have set (e.g. editor.lineNumbers).
     const existing = config.get<Record<string, unknown>>('[markdown]') ?? {};
     await config.update('[markdown]', {
         ...existing,
@@ -92,4 +143,17 @@ export async function applyTypographyBundle(): Promise<void> {
         'editor.fontSize': bundle.bodySize,
         'editor.lineHeight': bundle.bodyLineHeight,
     }, vscode.ConfigurationTarget.Global);
+
+    // Write built-in bundles into user settings.json so they're visible
+    // and editable. VS Code package.json defaults are invisible in the
+    // user's file — this makes them discoverable.
+    const typoConfig = vscode.workspace.getConfiguration('cozyMd.typography');
+    const current = typoConfig.inspect<Record<string, unknown>>('customBundles');
+    const userValue = current?.globalValue as Record<string, unknown> | undefined;
+    if (!userValue || Object.keys(userValue).length === 0) {
+        await typoConfig.update('customBundles', {
+            clean: CLEAN_BUNDLE,
+            cozy: COZY_BUNDLE,
+        }, vscode.ConfigurationTarget.Global);
+    }
 }

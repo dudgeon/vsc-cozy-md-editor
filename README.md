@@ -28,6 +28,33 @@ Track changes *recording* is built in — toggle it on and your edits are automa
 
 **Frontmatter.** Structured metadata (title, author, tags, status) can go at the top of any markdown file. The extension has templates and shortcuts so you don't have to remember the formatting rules.
 
+## Typography
+
+The extension ships with two typography bundles:
+
+- **Cozy** (default) — Newsreader for headings, Plus Jakarta Sans for body text. Warm and literary, good for long-form writing and drafts.
+- **Clean** — Inter for everything. Information-dense and familiar (same font as Notion, Linear, GitHub). Good for notes, research, and structured docs.
+
+Switch between them in Settings (`Cmd+,`) — search for "typography bundle".
+
+**Making your own bundle:** You can define custom bundles in your settings.json. For example, to create a monospace bundle:
+
+```json
+"cozyMd.typography.customBundles": {
+    "monospace": {
+        "bodyFont": "'JetBrains Mono', monospace",
+        "headingFont": "'JetBrains Mono', monospace",
+        "bodySize": 14,
+        "bodyLineHeight": 1.5
+    }
+},
+"cozyMd.typography.activeBundle": "monospace"
+```
+
+Any property you leave out falls back to sensible defaults. You only need to specify what you want to change.
+
+**Font installation:** The Cozy bundle looks best with [Newsreader](https://fonts.google.com/specimen/Newsreader) and [Plus Jakarta Sans](https://fonts.google.com/specimen/Plus+Jakarta+Sans) installed (both free from Google Fonts). If they're not installed, the extension falls back to system fonts that look nearly as good — New York and Avenir Next on macOS, Georgia and system-ui elsewhere.
+
 ## Google Docs pairing
 
 If you keep local markdown copies of Google Docs in your repo, you can record the relationship in each file's frontmatter:

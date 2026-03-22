@@ -308,12 +308,67 @@
         "cozyMd.typography.activeBundle": {
           "type": "string",
           "default": "cozy",
-          "enum": ["clean", "cozy"],
-          "enumDescriptions": [
-            "Knowledge work — Inter, clean and information-dense",
-            "Literary/editorial — Newsreader headings, Plus Jakarta Sans body"
-          ],
-          "description": "Typography bundle for markdown files. Controls fonts, sizes, and spacing."
+          "markdownDescription": "Which typography bundle to use for markdown files.\n\n**Built-in bundles:**\n- `cozy` — Newsreader headings + Plus Jakarta Sans body (warm, literary)\n- `clean` — Inter everywhere (information-dense, knowledge work)\n\nYou can also enter the name of a custom bundle you've defined in `#cozyMd.typography.customBundles#`."
+        },
+        "cozyMd.typography.customBundles": {
+          "type": "object",
+          "default": {
+            "clean": {
+              "bodyFont": "'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Segoe UI', Arial, sans-serif",
+              "headingFont": "'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Segoe UI', Arial, sans-serif",
+              "bodySize": 16,
+              "bodyLineHeight": 1.7,
+              "h1": { "size": "1.875em", "weight": "700", "letterSpacing": "-0.02em" },
+              "h2": { "size": "1.375em", "weight": "600", "letterSpacing": "-0.01em" },
+              "h3": { "size": "1em", "weight": "600" }
+            },
+            "cozy": {
+              "bodyFont": "'Plus Jakarta Sans', 'Avenir Next', -apple-system, 'Helvetica Neue', sans-serif",
+              "headingFont": "'Newsreader', 'New York', Charter, Georgia, serif",
+              "bodySize": 16,
+              "bodyLineHeight": 1.8,
+              "h1": { "size": "1.875em", "weight": "700", "letterSpacing": "-0.01em" },
+              "h2": { "size": "1.375em", "weight": "600" },
+              "h3": { "size": "1em", "weight": "500", "style": "italic" }
+            }
+          },
+          "markdownDescription": "Define your own typography bundles. Each bundle is a named set of fonts and sizes.\n\n**Example** — add this to your settings.json:\n```json\n\"cozyMd.typography.customBundles\": {\n  \"monospace\": {\n    \"bodyFont\": \"'JetBrains Mono', monospace\",\n    \"headingFont\": \"'JetBrains Mono', monospace\",\n    \"bodySize\": 14,\n    \"bodyLineHeight\": 1.5\n  }\n}\n```\nThen set `#cozyMd.typography.activeBundle#` to `monospace`.\n\nAny property you leave out falls back to the 'clean' bundle defaults. You only need to specify what you want to change.",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "bodyFont": { "type": "string", "description": "CSS font-family for body text (comma-separated font stack)" },
+              "headingFont": { "type": "string", "description": "CSS font-family for headings" },
+              "bodySize": { "type": "number", "description": "Body font size in pixels" },
+              "bodyLineHeight": { "type": "number", "description": "Body line height (unitless ratio)" },
+              "h1": {
+                "type": "object",
+                "properties": {
+                  "size": { "type": "string", "description": "Font size (e.g., '1.875em')" },
+                  "weight": { "type": "string", "description": "Font weight (e.g., '700')" },
+                  "letterSpacing": { "type": "string", "description": "Letter spacing (e.g., '-0.02em')" },
+                  "style": { "type": "string", "description": "Font style (e.g., 'italic')" }
+                }
+              },
+              "h2": {
+                "type": "object",
+                "properties": {
+                  "size": { "type": "string" },
+                  "weight": { "type": "string" },
+                  "letterSpacing": { "type": "string" },
+                  "style": { "type": "string" }
+                }
+              },
+              "h3": {
+                "type": "object",
+                "properties": {
+                  "size": { "type": "string" },
+                  "weight": { "type": "string" },
+                  "letterSpacing": { "type": "string" },
+                  "style": { "type": "string" }
+                }
+              }
+            }
+          }
         },
         "cozyMd.polish.dimSyntaxMarkers": {
           "type": "boolean",
