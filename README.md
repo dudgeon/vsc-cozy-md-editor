@@ -16,7 +16,9 @@ A lot of people are coming to VS Code for the first time because it's the main w
 
 **Lists and tables behave normally.** Hit Enter at the end of a bullet point and you get a new bullet. Tab indents. Tables have a toolbar for adding rows and columns, and Tab moves between cells. Tables auto-align when you save.
 
-**Track changes.** You can turn on change tracking (using a format called CriticMarkup) that marks additions, deletions, and substitutions right in the file. Changes show up color-coded — green for additions, red strikethrough for deletions — and you can accept or reject them individually. Useful for reviewing your own drafts, working with Claude as an editor, or collaborating with other people.
+**Track changes.** The extension reads and renders [CriticMarkup](https://criticmarkup.com) — a format for marking additions, deletions, and substitutions right in the file. Changes show up color-coded — green for additions, red strikethrough for deletions — and you can accept or reject them individually. Move your cursor to a change to see the full syntax and Accept/Reject controls.
+
+Track changes *recording* (automatically wrapping your edits in CriticMarkup) and Claude Code integration are coming in the next release.
 
 **Frontmatter.** Structured metadata (title, author, tags, status) can go at the top of any markdown file. The extension has templates and shortcuts so you don't have to remember the formatting rules.
 
@@ -34,19 +36,27 @@ This also works for Google Slides — if you generate a presentation from a mark
 
 ## Installation
 
-Cozy MD Editor isn't in the VS Code marketplace yet, so you install it from a `.vsix` file. If you've never done that before, here's the whole process:
+Cozy MD Editor isn't in the VS Code marketplace yet. You can either build it from source or install from a `.vsix` file.
 
-1. **Open VS Code.** If you don't have it yet, download it from [code.visualstudio.com](https://code.visualstudio.com).
+### Build from source (recommended for contributors)
 
-2. **Open the Extensions panel.** Click the square icon in the left sidebar (it looks like four small blocks), or press **Cmd+Shift+X** on Mac / **Ctrl+Shift+X** on Windows or Linux.
+1. **Clone the repo** and install dependencies:
+   ```bash
+   git clone https://github.com/dudgeon/vsc-cozy-md-editor.git
+   cd vsc-cozy-md-editor
+   nvm use          # requires Node 20+
+   npm install
+   ```
 
-3. **Click the "..." menu** at the top-right of the Extensions panel.
+2. **Press F5** in VS Code to launch the Extension Development Host with the extension loaded. Open any `.md` file to see it in action.
 
-4. **Choose "Install from VSIX..."** from the dropdown.
+### Install from .vsix
 
-5. **Find and select the `.vsix` file** you were given.
-
-6. **That's it.** VS Code may ask you to reload — go ahead. After that, the extension activates automatically whenever you open a `.md` file.
+1. Build the package: `npm run package`
+2. In VS Code, open the Extensions panel (**Cmd+Shift+X**)
+3. Click the **"..."** menu at the top-right, choose **"Install from VSIX..."**
+4. Select the generated `.vsix` file
+5. Reload when prompted — the extension activates automatically for `.md` files
 
 ## Keyboard shortcuts
 
@@ -59,8 +69,10 @@ Cozy MD Editor isn't in the VS Code marketplace yet, so you install it from a `.
 | Cycle heading level | Cmd+Shift+H | Ctrl+Shift+H |
 | Insert frontmatter | Cmd+Alt+F | Ctrl+Alt+F |
 | Table menu | Cmd+Alt+T | Ctrl+Alt+T |
+| Indent lines | Cmd+] | Ctrl+] |
+| Outdent lines | Cmd+[ | Ctrl+[ |
 | Toggle track changes | Cmd+Shift+T | Ctrl+Shift+T |
-| Add comment | Cmd+Alt+C | Ctrl+Alt+C |
+| Add comment | Cmd+Alt+M | Ctrl+Alt+M |
 | Accept change | Cmd+Alt+A | Ctrl+Alt+A |
 | Next change | Cmd+Alt+] | Ctrl+Alt+] |
 | Previous change | Cmd+Alt+[ | Ctrl+Alt+[ |
