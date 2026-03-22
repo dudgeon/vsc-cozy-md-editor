@@ -161,22 +161,88 @@ The `skills/` directory contains Claude Code skills for this project:
 - Remaining stubs: comments, track-changes, Claude dispatch, providers, sidebar, google sync
 - F5 should now show heading styling, syntax dimming, and working toolbar commands
 
-### Known Issues
-- VS Code DecorationRenderOptions does not support `fontSize` — headings use fontWeight
-  instead. Investigating alternatives (e.g., codicons, webview-based heading chrome).
+### Known Issues — Decoration Polish (from first F5 validation)
+
+1. **Bold/italic markers visible when they shouldn't be**
+   Markers (`**`, `*`) are dimmed (opacity 0.3) but still readable. They should
+   be fully *hidden* when the cursor is elsewhere — same technique as heading `#`
+   markers (`color: transparent` + `letterSpacing: '-1em'`). Requires splitting
+   the current `SyntaxDimmingProvider` into a `SyntaxHidingProvider` for
+   bold/italic markers that uses the hiding style instead of opacity.
+
+2. **Link URLs visible when they shouldn't be**
+   `[text](url)` shows all syntax dimmed but readable. When cursor is away,
+   only the link text should be visible — `[`, `](`, the URL, and `)` should
+   all be hidden. Same hiding technique as #1. Requires a separate
+   `LinkHidingProvider` (or folding links into the syntax-hiding provider).
+
+3. **Tables not visually formatted**
+   Raw table markup shows as-is. Tables should render with padded columns
+   (fixed-width alignment). Two possible approaches:
+   a) Auto-format tables on save/type using `serializeTable()` (rewrites the
+      text to add padding) — **recommended**, simpler and produces real
+      whitespace the user can see even outside the extension
+   b) Decoration-based padding (visual only, text unchanged) — fragile
+
+4. **Heading font size — no differentiation**
+   VS Code `DecorationRenderOptions` has no `fontSize` property. Current
+   implementation uses only `fontWeight`. Headings all look the same size.
+   Workaround to investigate: CSS injection via the `textDecoration` property
+   (`textDecoration: 'none; font-size: 1.5em'`). This hack is used by
+   extensions like Better Comments and may work for font-size scaling.
+   Fallback: use color or underline to distinguish heading levels.
+
+5. **Inline code not visually decorated**
+   Backtick markers are dimmed but the code content has no visual treatment
+   (no background, no border). Expected: backticks hidden, code content gets
+   a subtle background color (e.g., `rgba(128,128,128,0.15)`) to visually
+   set it apart as a code span. Requires a new `InlineCodeContentProvider`
+   with `backgroundColor` in its collapsed style.
+
+6. **Code blocks lack decoration**
+   Fenced code blocks (` ``` `) are passed through with no visual treatment.
+   Expected: subtle background on the entire block, dimmed/hidden fence
+   markers. Lower priority since VS Code's built-in syntax highlighting
+   already handles code block content.
+
+### Other Known Issues
 - Remaining lint warnings (16) are all in Phase 2+ stub files (unused params).
 
 ## Phased Roadmap
 Phase 0: Build & test skill — DONE
-Phase 1: Markdown Polish + Toolbar + Tables — DONE
-Phase 2: CriticMarkup Display (read/render track changes) — NEXT
+Phase 1: Markdown Polish + Toolbar + Tables — DONE, but has decoration issues
+         (see Known Issues above — fix before moving to Phase 2)
+Phase 1.5: Decoration polish fixes — NEXT
+Phase 2: CriticMarkup Display (read/render track changes)
 Phase 3: Track Changes Recording + Comments + Simple Claude dispatch
 Phase 4: Claude as Collaborator (context buffer, rewrite, file watcher)
 Phase 5: Agentic Workflows (@claude annotations, conflict resolution)
 Phase 6: Google Workspace Sync — gated on gws-cli availability
          (no-regrets items like frontmatter URL pairing can land any time)
 
-### Phase 2 Scope (next up)
+### Phase 1.5 Scope — Decoration Polish (next up)
+Fix the decoration issues found during first F5 validation. The goal is that
+`test-fixtures/kitchen-sink.md` looks like a polished writing environment, not
+raw markdown with colored syntax.
+
+1. **Hide bold/italic markers** — split `SyntaxDimmingProvider` into providers
+   that use `color: transparent` + `letterSpacing: '-1em'` (the heading marker
+   technique) instead of opacity. Bold/italic content itself stays unstyled.
+2. **Hide link syntax** — hide `[`, `](url)`, `)` when cursor is away. Only
+   the link text remains visible. Consider adding an underline or color to
+   the link text so it's still recognizable as a link.
+3. **Auto-format tables** — on save (via `onWillSaveTextDocument`), find all
+   tables and replace with `serializeTable()` output. Respects
+   `cozyMd.tables.autoAlignOnSave` setting (default true).
+4. **Heading font size** — try `textDecoration: 'none; font-size: 1.5em'` CSS
+   injection. Test h1=1.6em, h2=1.3em, h3=1.1em. If it doesn't work, fall
+   back to color differentiation (h1=accent color, h2=secondary, etc.).
+5. **Inline code background** — hide backtick markers, add
+   `backgroundColor` to code content. New `InlineCodeContentProvider`.
+6. **Code block background** — optional stretch goal. Dim/hide fence markers,
+   subtle background on block content.
+
+### Phase 2 Scope
 Wire the CriticMarkup parser into a decoration provider for visual track changes:
 1. **CriticMarkup decoration provider** — register with DecorationManager,
    color additions (green), deletions (red/strikethrough), highlights (yellow),
