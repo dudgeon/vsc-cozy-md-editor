@@ -5,11 +5,30 @@ import { DecorationProvider, DecoratedRegion, DecorationManager } from './manage
 // Constants
 // ---------------------------------------------------------------------------
 
-/** Opacity value used for dimmed syntax markers in collapsed state. */
-const MARKER_DIM_OPACITY = '0.3';
-
 /** Opacity value used for the dimmed frontmatter block in collapsed state. */
 const FRONTMATTER_DIM_OPACITY = '0.4';
+
+/** Opacity value used for dimmed fence markers in code blocks. */
+const CODE_BLOCK_FENCE_DIM_OPACITY = '0.4';
+
+// ---------------------------------------------------------------------------
+// Shared hiding style
+// ---------------------------------------------------------------------------
+
+/**
+ * The "hiding" collapsed style makes characters invisible and occupy zero
+ * visual space by combining transparent color with negative letter-spacing.
+ * Used for heading markers, bold/italic markers, link syntax, backticks.
+ */
+const HIDDEN_COLLAPSED: vscode.DecorationRenderOptions = {
+    color: 'transparent',
+    letterSpacing: '-1em',
+};
+
+/** Expanded style with no overrides — renders markers normally. */
+const VISIBLE_EXPANDED: vscode.DecorationRenderOptions = {
+    // No overrides — markers rendered normally.
+};
 
 // ---------------------------------------------------------------------------
 // Regex patterns
@@ -51,7 +70,14 @@ const ID_HEADING_MARKERS = 'markdown-polish-heading-markers';
 const ID_HEADING_TEXT_H1 = 'markdown-polish-heading-text-h1';
 const ID_HEADING_TEXT_H2 = 'markdown-polish-heading-text-h2';
 const ID_HEADING_TEXT_H3 = 'markdown-polish-heading-text-h3';
-const ID_SYNTAX = 'markdown-polish-syntax';
+const ID_HEADING_TEXT_H46 = 'markdown-polish-heading-text-h46';
+const ID_BOLD_ITALIC_MARKERS = 'markdown-polish-bold-italic-markers';
+const ID_LINK_MARKERS = 'markdown-polish-link-markers';
+const ID_LINK_TEXT = 'markdown-polish-link-text';
+const ID_INLINE_CODE_MARKERS = 'markdown-polish-inline-code-markers';
+const ID_INLINE_CODE_CONTENT = 'markdown-polish-inline-code-content';
+const ID_CODE_BLOCK_FENCES = 'markdown-polish-code-block-fences';
+const ID_CODE_BLOCK_CONTENT = 'markdown-polish-code-block-content';
 const ID_FRONTMATTER = 'markdown-polish-frontmatter';
 
 // ---------------------------------------------------------------------------
@@ -64,8 +90,7 @@ const ID_FRONTMATTER = 'markdown-polish-frontmatter';
  * the markers to occupy zero visible space.
  */
 const HEADING_MARKER_COLLAPSED: vscode.DecorationRenderOptions = {
-    color: 'transparent',
-    letterSpacing: '-1em',
+    ...HIDDEN_COLLAPSED,
 };
 
 const HEADING_MARKER_EXPANDED: vscode.DecorationRenderOptions = {
@@ -75,19 +100,97 @@ const HEADING_MARKER_EXPANDED: vscode.DecorationRenderOptions = {
 /**
  * Heading text styles per level (collapsed).
  *
- * NOTE: VS Code's `DecorationRenderOptions` does not support `fontSize`.
- * We use `fontWeight` for emphasis instead.
- * TODO: Investigate CSS injection via `textDecoration` for font-size
- * scaling, or revisit when VS Code API adds fontSize support.
+ * Uses the `textDecoration` CSS injection hack to set font-size. VS Code
+ * passes the `textDecoration` value as raw CSS, so injecting after a
+ * semicolon lets us set arbitrary CSS properties.
+ *
+ * TODO: The textDecoration CSS injection for font-size needs F5 validation.
+ * If VS Code strips or sanitizes the injected CSS, the fontWeight fallback
+ * is still in effect and headings will still look differentiated.
  */
 const HEADING_TEXT_COLLAPSED: Record<string, vscode.DecorationRenderOptions> = {
-    [ID_HEADING_TEXT_H1]: { fontWeight: '700' },
-    [ID_HEADING_TEXT_H2]: { fontWeight: '700' },
-    [ID_HEADING_TEXT_H3]: { fontWeight: '600' },
+    [ID_HEADING_TEXT_H1]: {
+        textDecoration: 'none; font-size: 1.6em',
+        fontWeight: '700',
+    },
+    [ID_HEADING_TEXT_H2]: {
+        textDecoration: 'none; font-size: 1.3em',
+        fontWeight: '700',
+    },
+    [ID_HEADING_TEXT_H3]: {
+        textDecoration: 'none; font-size: 1.1em',
+        fontWeight: '600',
+    },
+    [ID_HEADING_TEXT_H46]: {
+        fontWeight: '600',
+    },
 };
 
 const HEADING_TEXT_EXPANDED: vscode.DecorationRenderOptions = {
     // No overrides — text rendered normally when cursor is on the line.
+};
+
+// ---------------------------------------------------------------------------
+// Link text style (collapsed = underline so it looks like a link)
+// ---------------------------------------------------------------------------
+
+const LINK_TEXT_COLLAPSED: vscode.DecorationRenderOptions = {
+    textDecoration: 'underline',
+};
+
+const LINK_TEXT_EXPANDED: vscode.DecorationRenderOptions = {
+    // No overrides — link text rendered normally when cursor is on the line.
+};
+
+// ---------------------------------------------------------------------------
+// Inline code content style (collapsed = background highlight)
+// ---------------------------------------------------------------------------
+
+/**
+ * Inline code content gets a subtle background when collapsed.
+ *
+ * Uses the theme color `textCodeBlock.background` for theme-aware styling.
+ * TODO: If `textCodeBlock.background` doesn't produce visible results in F5
+ * testing, fall back to `'rgba(128, 128, 128, 0.15)'`.
+ */
+const INLINE_CODE_CONTENT_COLLAPSED: vscode.DecorationRenderOptions = {
+    backgroundColor: new vscode.ThemeColor('textCodeBlock.background'),
+    // Fallback if the ThemeColor isn't visible — uncomment and remove the line above:
+    // backgroundColor: 'rgba(128, 128, 128, 0.15)',
+};
+
+const INLINE_CODE_CONTENT_EXPANDED: vscode.DecorationRenderOptions = {
+    // No overrides — code content rendered normally when cursor is on the line.
+};
+
+// ---------------------------------------------------------------------------
+// Code block styles
+// ---------------------------------------------------------------------------
+
+const CODE_BLOCK_FENCE_COLLAPSED: vscode.DecorationRenderOptions = {
+    opacity: CODE_BLOCK_FENCE_DIM_OPACITY,
+};
+
+const CODE_BLOCK_FENCE_EXPANDED: vscode.DecorationRenderOptions = {
+    opacity: '1.0',
+};
+
+/**
+ * Code block content lines get a subtle whole-line background when collapsed.
+ *
+ * TODO: Needs F5 validation — the isWholeLine option is set per-decoration
+ * in provideDecorations, not in the base style here.
+ */
+const CODE_BLOCK_CONTENT_COLLAPSED: vscode.DecorationRenderOptions = {
+    backgroundColor: new vscode.ThemeColor('textCodeBlock.background'),
+    isWholeLine: true,
+    // Fallback if the ThemeColor isn't visible — uncomment and remove the line above:
+    // backgroundColor: 'rgba(128, 128, 128, 0.10)',
+};
+
+const CODE_BLOCK_CONTENT_EXPANDED: vscode.DecorationRenderOptions = {
+    isWholeLine: true,
+    // No overrides — content rendered normally when cursor is inside the block.
 };
 
 // ---------------------------------------------------------------------------
@@ -134,8 +237,7 @@ class HeadingMarkersProvider implements DecorationProvider {
 /**
  * Provides regions for heading text (after the `# ` marker) at a specific
  * set of heading levels. One instance is created per style bucket
- * (h1, h2, h3). Levels 4-6 get no special text styling and are not
- * registered.
+ * (h1, h2, h3, h4-6).
  */
 class HeadingTextProvider implements DecorationProvider {
     constructor(
@@ -177,32 +279,24 @@ class HeadingTextProvider implements DecorationProvider {
 }
 
 // ---------------------------------------------------------------------------
-// SyntaxDimmingProvider
+// BoldItalicMarkersProvider
 // ---------------------------------------------------------------------------
 
 /**
- * Provides regions for inline syntax markers (bold/italic asterisks,
- * backticks, link brackets and URLs). In collapsed state the markers are
- * dimmed; in expanded state they are fully visible.
- *
- * Only the *marker characters* get the dimmed decoration. The content
- * between markers is left untouched.
+ * Provides regions for bold/italic asterisk markers (`*`, `**`, `***`).
+ * In collapsed state the markers are hidden (transparent + zero width);
+ * in expanded state they are fully visible.
  */
-class SyntaxDimmingProvider implements DecorationProvider {
-    readonly id = ID_SYNTAX;
+class BoldItalicMarkersProvider implements DecorationProvider {
+    readonly id = ID_BOLD_ITALIC_MARKERS;
 
     provideDecorations(editor: vscode.TextEditor): DecoratedRegion[] {
         const doc = editor.document;
         const regions: DecoratedRegion[] = [];
-
-        // Detect the frontmatter boundary so we skip those lines.
         const fmEnd = detectFrontmatterEnd(doc);
-
-        // Track fenced code block state so we skip content inside them.
         let inFencedBlock = false;
 
         for (let i = 0; i < doc.lineCount; i++) {
-            // Skip frontmatter lines.
             if (fmEnd !== -1 && i <= fmEnd) {
                 continue;
             }
@@ -211,144 +305,407 @@ class SyntaxDimmingProvider implements DecorationProvider {
             const text = line.text;
             const trimmed = text.trimStart();
 
-            // Toggle fenced code block state.
             if (trimmed.startsWith('```')) {
                 inFencedBlock = !inFencedBlock;
                 continue;
             }
-
-            // Skip lines inside fenced code blocks.
             if (inFencedBlock) {
                 continue;
             }
-
-            // Skip heading lines (handled by heading providers).
             if (HEADING_RE.test(text)) {
                 continue;
             }
 
-            this.parseBoldItalic(i, text, regions);
-            this.parseInlineCode(i, text, regions);
-            this.parseLinks(i, text, regions);
+            BOLD_ITALIC_RE.lastIndex = 0;
+            let match: RegExpExecArray | null;
+
+            while ((match = BOLD_ITALIC_RE.exec(text)) !== null) {
+                const fullMatchStart = match.index;
+                const markerLen = match[1].length;
+                const contentLen = match[2].length;
+
+                // Opening marker
+                const openRange = new vscode.Range(
+                    i, fullMatchStart,
+                    i, fullMatchStart + markerLen,
+                );
+                regions.push(makeSimpleRegion(openRange));
+
+                // Closing marker
+                const closeStart = fullMatchStart + markerLen + contentLen;
+                const closeRange = new vscode.Range(
+                    i, closeStart,
+                    i, closeStart + markerLen,
+                );
+                regions.push(makeSimpleRegion(closeRange));
+            }
         }
 
         return regions;
     }
+}
 
-    /**
-     * Parse bold/italic markers and emit regions for the asterisk delimiters.
-     */
-    private parseBoldItalic(
-        lineIndex: number,
-        text: string,
-        regions: DecoratedRegion[],
-    ): void {
-        BOLD_ITALIC_RE.lastIndex = 0;
-        let match: RegExpExecArray | null;
+// ---------------------------------------------------------------------------
+// LinkMarkersProvider
+// ---------------------------------------------------------------------------
 
-        while ((match = BOLD_ITALIC_RE.exec(text)) !== null) {
-            const fullMatchStart = match.index;
-            const markerLen = match[1].length;
-            const contentLen = match[2].length;
+/**
+ * Provides regions for link syntax markers: `[`, `](`, URL, and `)`.
+ * In collapsed state these are hidden (transparent + zero width);
+ * in expanded state they are fully visible.
+ */
+class LinkMarkersProvider implements DecorationProvider {
+    readonly id = ID_LINK_MARKERS;
 
-            // Opening marker
-            const openRange = new vscode.Range(
-                lineIndex, fullMatchStart,
-                lineIndex, fullMatchStart + markerLen,
-            );
-            regions.push(makeSimpleRegion(openRange));
+    provideDecorations(editor: vscode.TextEditor): DecoratedRegion[] {
+        const doc = editor.document;
+        const regions: DecoratedRegion[] = [];
+        const fmEnd = detectFrontmatterEnd(doc);
+        let inFencedBlock = false;
 
-            // Closing marker
-            const closeStart = fullMatchStart + markerLen + contentLen;
-            const closeRange = new vscode.Range(
-                lineIndex, closeStart,
-                lineIndex, closeStart + markerLen,
-            );
-            regions.push(makeSimpleRegion(closeRange));
+        for (let i = 0; i < doc.lineCount; i++) {
+            if (fmEnd !== -1 && i <= fmEnd) {
+                continue;
+            }
+
+            const line = doc.lineAt(i);
+            const text = line.text;
+            const trimmed = text.trimStart();
+
+            if (trimmed.startsWith('```')) {
+                inFencedBlock = !inFencedBlock;
+                continue;
+            }
+            if (inFencedBlock) {
+                continue;
+            }
+            if (HEADING_RE.test(text)) {
+                continue;
+            }
+
+            LINK_RE.lastIndex = 0;
+            let match: RegExpExecArray | null;
+
+            while ((match = LINK_RE.exec(text)) !== null) {
+                const fullMatchStart = match.index;
+                const linkText = match[1];
+                const url = match[2];
+
+                // `[` — opening bracket
+                const openBracketRange = new vscode.Range(
+                    i, fullMatchStart,
+                    i, fullMatchStart + 1,
+                );
+                regions.push(makeSimpleRegion(openBracketRange));
+
+                // `](` — closing bracket + opening paren
+                const closeBracketStart = fullMatchStart + 1 + linkText.length;
+                const closeBracketRange = new vscode.Range(
+                    i, closeBracketStart,
+                    i, closeBracketStart + 2,
+                );
+                regions.push(makeSimpleRegion(closeBracketRange));
+
+                // URL portion
+                const urlStart = closeBracketStart + 2;
+                const urlRange = new vscode.Range(
+                    i, urlStart,
+                    i, urlStart + url.length,
+                );
+                regions.push(makeSimpleRegion(urlRange));
+
+                // `)` — closing paren
+                const closeParenPos = urlStart + url.length;
+                const closeParenRange = new vscode.Range(
+                    i, closeParenPos,
+                    i, closeParenPos + 1,
+                );
+                regions.push(makeSimpleRegion(closeParenRange));
+            }
         }
+
+        return regions;
     }
+}
 
-    /**
-     * Parse inline code backtick markers and emit regions.
-     */
-    private parseInlineCode(
-        lineIndex: number,
-        text: string,
-        regions: DecoratedRegion[],
-    ): void {
-        INLINE_CODE_RE.lastIndex = 0;
-        let match: RegExpExecArray | null;
+// ---------------------------------------------------------------------------
+// LinkTextProvider
+// ---------------------------------------------------------------------------
 
-        while ((match = INLINE_CODE_RE.exec(text)) !== null) {
-            const fullMatchStart = match.index;
-            const tickLen = match[1].length;
-            const contentLen = match[2].length;
+/**
+ * Provides regions for link display text (the text between `[` and `]`).
+ * In collapsed state the text is underlined so it remains recognizable as
+ * a link even when all surrounding syntax is hidden.
+ * In expanded state, no special styling is applied.
+ */
+class LinkTextProvider implements DecorationProvider {
+    readonly id = ID_LINK_TEXT;
 
-            // Opening backtick(s)
-            const openRange = new vscode.Range(
-                lineIndex, fullMatchStart,
-                lineIndex, fullMatchStart + tickLen,
-            );
-            regions.push(makeSimpleRegion(openRange));
+    provideDecorations(editor: vscode.TextEditor): DecoratedRegion[] {
+        const doc = editor.document;
+        const regions: DecoratedRegion[] = [];
+        const fmEnd = detectFrontmatterEnd(doc);
+        let inFencedBlock = false;
 
-            // Closing backtick(s)
-            const closeStart = fullMatchStart + tickLen + contentLen;
-            const closeRange = new vscode.Range(
-                lineIndex, closeStart,
-                lineIndex, closeStart + tickLen,
-            );
-            regions.push(makeSimpleRegion(closeRange));
+        for (let i = 0; i < doc.lineCount; i++) {
+            if (fmEnd !== -1 && i <= fmEnd) {
+                continue;
+            }
+
+            const line = doc.lineAt(i);
+            const text = line.text;
+            const trimmed = text.trimStart();
+
+            if (trimmed.startsWith('```')) {
+                inFencedBlock = !inFencedBlock;
+                continue;
+            }
+            if (inFencedBlock) {
+                continue;
+            }
+            if (HEADING_RE.test(text)) {
+                continue;
+            }
+
+            LINK_RE.lastIndex = 0;
+            let match: RegExpExecArray | null;
+
+            while ((match = LINK_RE.exec(text)) !== null) {
+                const fullMatchStart = match.index;
+                const linkText = match[1];
+
+                // Link text content (between [ and ])
+                const textRange = new vscode.Range(
+                    i, fullMatchStart + 1,
+                    i, fullMatchStart + 1 + linkText.length,
+                );
+                regions.push(makeSimpleRegion(textRange));
+            }
         }
+
+        return regions;
     }
+}
 
-    /**
-     * Parse `[text](url)` links and emit regions for brackets, parens,
-     * and the URL. The link text itself is NOT dimmed.
-     */
-    private parseLinks(
-        lineIndex: number,
-        text: string,
-        regions: DecoratedRegion[],
-    ): void {
-        LINK_RE.lastIndex = 0;
-        let match: RegExpExecArray | null;
+// ---------------------------------------------------------------------------
+// InlineCodeMarkersProvider
+// ---------------------------------------------------------------------------
 
-        while ((match = LINK_RE.exec(text)) !== null) {
-            const fullMatchStart = match.index;
-            const linkText = match[1];
-            const url = match[2];
+/**
+ * Provides regions for inline code backtick markers.
+ * In collapsed state the backticks are hidden (transparent + zero width);
+ * in expanded state they are fully visible.
+ */
+class InlineCodeMarkersProvider implements DecorationProvider {
+    readonly id = ID_INLINE_CODE_MARKERS;
 
-            // `[` — opening bracket
-            const openBracketRange = new vscode.Range(
-                lineIndex, fullMatchStart,
-                lineIndex, fullMatchStart + 1,
-            );
-            regions.push(makeSimpleRegion(openBracketRange));
+    provideDecorations(editor: vscode.TextEditor): DecoratedRegion[] {
+        const doc = editor.document;
+        const regions: DecoratedRegion[] = [];
+        const fmEnd = detectFrontmatterEnd(doc);
+        let inFencedBlock = false;
 
-            // `](` — closing bracket + opening paren
-            const closeBracketStart = fullMatchStart + 1 + linkText.length;
-            const closeBracketRange = new vscode.Range(
-                lineIndex, closeBracketStart,
-                lineIndex, closeBracketStart + 2,
-            );
-            regions.push(makeSimpleRegion(closeBracketRange));
+        for (let i = 0; i < doc.lineCount; i++) {
+            if (fmEnd !== -1 && i <= fmEnd) {
+                continue;
+            }
 
-            // URL portion
-            const urlStart = closeBracketStart + 2;
-            const urlRange = new vscode.Range(
-                lineIndex, urlStart,
-                lineIndex, urlStart + url.length,
-            );
-            regions.push(makeSimpleRegion(urlRange));
+            const line = doc.lineAt(i);
+            const text = line.text;
+            const trimmed = text.trimStart();
 
-            // `)` — closing paren
-            const closeParenPos = urlStart + url.length;
-            const closeParenRange = new vscode.Range(
-                lineIndex, closeParenPos,
-                lineIndex, closeParenPos + 1,
-            );
-            regions.push(makeSimpleRegion(closeParenRange));
+            if (trimmed.startsWith('```')) {
+                inFencedBlock = !inFencedBlock;
+                continue;
+            }
+            if (inFencedBlock) {
+                continue;
+            }
+            if (HEADING_RE.test(text)) {
+                continue;
+            }
+
+            INLINE_CODE_RE.lastIndex = 0;
+            let match: RegExpExecArray | null;
+
+            while ((match = INLINE_CODE_RE.exec(text)) !== null) {
+                const fullMatchStart = match.index;
+                const tickLen = match[1].length;
+                const contentLen = match[2].length;
+
+                // Opening backtick(s)
+                const openRange = new vscode.Range(
+                    i, fullMatchStart,
+                    i, fullMatchStart + tickLen,
+                );
+                regions.push(makeSimpleRegion(openRange));
+
+                // Closing backtick(s)
+                const closeStart = fullMatchStart + tickLen + contentLen;
+                const closeRange = new vscode.Range(
+                    i, closeStart,
+                    i, closeStart + tickLen,
+                );
+                regions.push(makeSimpleRegion(closeRange));
+            }
         }
+
+        return regions;
+    }
+}
+
+// ---------------------------------------------------------------------------
+// InlineCodeContentProvider
+// ---------------------------------------------------------------------------
+
+/**
+ * Provides regions for inline code content (text between backticks).
+ * In collapsed state the content gets a background color to visually
+ * distinguish it as code; in expanded state no special styling is applied.
+ */
+class InlineCodeContentProvider implements DecorationProvider {
+    readonly id = ID_INLINE_CODE_CONTENT;
+
+    provideDecorations(editor: vscode.TextEditor): DecoratedRegion[] {
+        const doc = editor.document;
+        const regions: DecoratedRegion[] = [];
+        const fmEnd = detectFrontmatterEnd(doc);
+        let inFencedBlock = false;
+
+        for (let i = 0; i < doc.lineCount; i++) {
+            if (fmEnd !== -1 && i <= fmEnd) {
+                continue;
+            }
+
+            const line = doc.lineAt(i);
+            const text = line.text;
+            const trimmed = text.trimStart();
+
+            if (trimmed.startsWith('```')) {
+                inFencedBlock = !inFencedBlock;
+                continue;
+            }
+            if (inFencedBlock) {
+                continue;
+            }
+            if (HEADING_RE.test(text)) {
+                continue;
+            }
+
+            INLINE_CODE_RE.lastIndex = 0;
+            let match: RegExpExecArray | null;
+
+            while ((match = INLINE_CODE_RE.exec(text)) !== null) {
+                const fullMatchStart = match.index;
+                const tickLen = match[1].length;
+                const contentLen = match[2].length;
+
+                // Code content (between backticks)
+                const contentStart = fullMatchStart + tickLen;
+                const contentRange = new vscode.Range(
+                    i, contentStart,
+                    i, contentStart + contentLen,
+                );
+                regions.push(makeSimpleRegion(contentRange));
+            }
+        }
+
+        return regions;
+    }
+}
+
+// ---------------------------------------------------------------------------
+// CodeBlockFenceProvider
+// ---------------------------------------------------------------------------
+
+/**
+ * Provides regions for fenced code block fence lines (opening and closing
+ * ``` delimiters). In collapsed state the fences are dimmed; in expanded
+ * state they are fully visible.
+ */
+class CodeBlockFenceProvider implements DecorationProvider {
+    readonly id = ID_CODE_BLOCK_FENCES;
+
+    provideDecorations(editor: vscode.TextEditor): DecoratedRegion[] {
+        const doc = editor.document;
+        const regions: DecoratedRegion[] = [];
+        const fmEnd = detectFrontmatterEnd(doc);
+        let fenceOpenLine = -1;
+
+        for (let i = 0; i < doc.lineCount; i++) {
+            if (fmEnd !== -1 && i <= fmEnd) {
+                continue;
+            }
+
+            const line = doc.lineAt(i);
+            const trimmed = line.text.trimStart();
+
+            if (trimmed.startsWith('```')) {
+                const fenceRange = new vscode.Range(
+                    i, 0,
+                    i, line.text.length,
+                );
+                regions.push(makeSimpleRegion(fenceRange));
+
+                if (fenceOpenLine === -1) {
+                    fenceOpenLine = i;
+                } else {
+                    fenceOpenLine = -1;
+                }
+            }
+        }
+
+        return regions;
+    }
+}
+
+// ---------------------------------------------------------------------------
+// CodeBlockContentProvider
+// ---------------------------------------------------------------------------
+
+/**
+ * Provides regions for fenced code block content lines (between the opening
+ * and closing ``` delimiters, exclusive). In collapsed state the content
+ * gets a subtle whole-line background; in expanded state no special styling.
+ */
+class CodeBlockContentProvider implements DecorationProvider {
+    readonly id = ID_CODE_BLOCK_CONTENT;
+
+    provideDecorations(editor: vscode.TextEditor): DecoratedRegion[] {
+        const doc = editor.document;
+        const regions: DecoratedRegion[] = [];
+        const fmEnd = detectFrontmatterEnd(doc);
+        let fenceOpenLine = -1;
+
+        for (let i = 0; i < doc.lineCount; i++) {
+            if (fmEnd !== -1 && i <= fmEnd) {
+                continue;
+            }
+
+            const line = doc.lineAt(i);
+            const trimmed = line.text.trimStart();
+
+            if (trimmed.startsWith('```')) {
+                if (fenceOpenLine === -1) {
+                    // Opening fence — start tracking.
+                    fenceOpenLine = i;
+                } else {
+                    // Closing fence — emit regions for all content lines
+                    // between the fences (exclusive of fence lines).
+                    for (let j = fenceOpenLine + 1; j < i; j++) {
+                        const contentLine = doc.lineAt(j);
+                        const contentRange = new vscode.Range(
+                            j, 0,
+                            j, contentLine.text.length,
+                        );
+                        regions.push(makeSimpleRegion(contentRange));
+                    }
+                    fenceOpenLine = -1;
+                }
+            }
+        }
+
+        return regions;
     }
 }
 
@@ -443,7 +800,8 @@ function detectFrontmatterEnd(doc: vscode.TextDocument): number {
 
 /**
  * Decoration provider for markdown polish: heading styling, inline syntax
- * marker dimming (bold, italic, code, links), and frontmatter dimming.
+ * marker hiding (bold, italic, code, links), link underline, inline code
+ * background, fenced code block styling, and frontmatter dimming.
  *
  * Registers multiple internal sub-providers with the {@link DecorationManager},
  * each with its own collapsed/expanded `TextEditorDecorationType` pair.
@@ -497,8 +855,7 @@ export class MarkdownPolishProvider implements vscode.Disposable {
                 HEADING_MARKER_EXPANDED,
             );
 
-            // Heading text per level (h1, h2, h3). Levels 4-6 have no
-            // special collapsed styling so we skip registering them.
+            // Heading text per level (h1, h2, h3 each get font-size + weight).
             this.register(
                 new HeadingTextProvider(ID_HEADING_TEXT_H1, [1]),
                 HEADING_TEXT_COLLAPSED[ID_HEADING_TEXT_H1],
@@ -510,17 +867,66 @@ export class MarkdownPolishProvider implements vscode.Disposable {
                 HEADING_TEXT_EXPANDED,
             );
             this.register(
-                new HeadingTextProvider(ID_HEADING_TEXT_H3, [3, 4, 5, 6]),
+                new HeadingTextProvider(ID_HEADING_TEXT_H3, [3]),
                 HEADING_TEXT_COLLAPSED[ID_HEADING_TEXT_H3],
+                HEADING_TEXT_EXPANDED,
+            );
+            // h4-h6 get fontWeight only (no font-size change).
+            this.register(
+                new HeadingTextProvider(ID_HEADING_TEXT_H46, [4, 5, 6]),
+                HEADING_TEXT_COLLAPSED[ID_HEADING_TEXT_H46],
                 HEADING_TEXT_EXPANDED,
             );
         }
 
         if (dimSyntaxMarkers) {
+            // Bold/italic markers: hidden when collapsed.
             this.register(
-                new SyntaxDimmingProvider(),
-                { opacity: MARKER_DIM_OPACITY },
-                { opacity: '1.0' },
+                new BoldItalicMarkersProvider(),
+                HIDDEN_COLLAPSED,
+                VISIBLE_EXPANDED,
+            );
+
+            // Link syntax markers ([, ](, URL, )): hidden when collapsed.
+            this.register(
+                new LinkMarkersProvider(),
+                HIDDEN_COLLAPSED,
+                VISIBLE_EXPANDED,
+            );
+
+            // Link text: underlined when collapsed so it's recognizable as a link.
+            this.register(
+                new LinkTextProvider(),
+                LINK_TEXT_COLLAPSED,
+                LINK_TEXT_EXPANDED,
+            );
+
+            // Inline code backtick markers: hidden when collapsed.
+            this.register(
+                new InlineCodeMarkersProvider(),
+                HIDDEN_COLLAPSED,
+                VISIBLE_EXPANDED,
+            );
+
+            // Inline code content: background highlight when collapsed.
+            this.register(
+                new InlineCodeContentProvider(),
+                INLINE_CODE_CONTENT_COLLAPSED,
+                INLINE_CODE_CONTENT_EXPANDED,
+            );
+
+            // Fenced code block fence lines: dimmed when collapsed.
+            this.register(
+                new CodeBlockFenceProvider(),
+                CODE_BLOCK_FENCE_COLLAPSED,
+                CODE_BLOCK_FENCE_EXPANDED,
+            );
+
+            // Fenced code block content lines: background when collapsed.
+            this.register(
+                new CodeBlockContentProvider(),
+                CODE_BLOCK_CONTENT_COLLAPSED,
+                CODE_BLOCK_CONTENT_EXPANDED,
             );
         }
 

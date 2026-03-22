@@ -4,6 +4,7 @@ import { MarkdownPolishProvider } from './decorations/markdown-polish';
 import { registerFormattingCommands } from './commands/formatting';
 import { registerTableCommands } from './commands/tables';
 import { registerFrontmatterCommands } from './commands/frontmatter';
+import { registerTableFormatter } from './commands/table-formatter';
 
 let decorationManager: DecorationManager | undefined;
 
@@ -21,6 +22,7 @@ export function activate(context: vscode.ExtensionContext): void {
     registerFormattingCommands(context);
     registerTableCommands(context);
     registerFrontmatterCommands(context);
+    registerTableFormatter(context);
 
     // Trigger initial decoration update for the active editor
     if (vscode.window.activeTextEditor) {

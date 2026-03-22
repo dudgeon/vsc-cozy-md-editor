@@ -95,6 +95,23 @@ src/
     └── changes-panel.ts      # Webview sidebar for changes overview
 ```
 
+## Process Rules
+
+### Document Before Fixing
+When an issue is reported or discovered, ALWAYS update this file (Known Issues,
+roadmap, or phase scope) BEFORE writing any code to fix it. No battlefield
+surgery — every issue gets a paper trail with root cause and proposed approach
+before implementation begins. This applies even if the fix seems obvious.
+
+### Parallelize With Agent Teams
+Use agent teams to dispatch independent work in parallel whenever tasks touch
+non-overlapping files. Only serialize when there are real dependencies.
+
+### Keep Docs Current
+Every agent working on this project must update CLAUDE.md if their work changes
+the current state, introduces a known issue, or deviates from the documented
+plan. The roadmap and Known Issues sections are living documents, not snapshots.
+
 ## Code Style
 - One module per feature area (see src/ directory structure above)
 - All parsers have dedicated unit tests
@@ -151,103 +168,130 @@ The `skills/` directory contains Claude Code skills for this project:
 - Extension activates on markdown files with visible editing features
 - **Parsers**: CriticMarkup, frontmatter, markdown-table — all implemented, 16/16 tests passing
 - **Decorations**: DecorationManager (expand-on-cursor framework) + MarkdownPolishProvider
-  (heading styling, syntax dimming, frontmatter dimming) — implemented and wired up
+  with 10+ sub-providers: heading markers (hidden), heading text (font size via CSS
+  injection + fontWeight), bold/italic markers (hidden), link markers (hidden), link
+  text (underlined), inline code markers (hidden), inline code content (background),
+  code block fences (dimmed), code block content (background), frontmatter (dimmed)
 - **Commands**: formatting (bold, italic, code, heading cycle, link, horizontal rule,
   blockquote), table operations (insert, add/remove row/column, alignment), frontmatter
   (insert with templates, edit existing fields) — all implemented and registered
 - **Keybindings**: Cmd+B (bold), Cmd+I (italic), Cmd+` (code), Cmd+Shift+H (heading),
   Cmd+K (link), Cmd+Alt+F (frontmatter), Cmd+Alt+T (table menu)
 - **Test fixture**: `test-fixtures/kitchen-sink.md` covers all supported markdown styles
+- **Table auto-format**: tables auto-align columns on save (respects `autoAlignOnSave` setting)
 - Remaining stubs: comments, track-changes, Claude dispatch, providers, sidebar, google sync
-- F5 should now show heading styling, syntax dimming, and working toolbar commands
+- F5 should show: hidden syntax markers with expand-on-cursor, sized headings,
+  underlined links, inline code with background, table column alignment on save
 
-### Known Issues — Decoration Polish (from first F5 validation)
+### Known Issues (from second F5 validation, 2026-03-21)
 
-1. **Bold/italic markers visible when they shouldn't be**
-   Markers (`**`, `*`) are dimmed (opacity 0.3) but still readable. They should
-   be fully *hidden* when the cursor is elsewhere — same technique as heading `#`
-   markers (`color: transparent` + `letterSpacing: '-1em'`). Requires splitting
-   the current `SyntaxDimmingProvider` into a `SyntaxHidingProvider` for
-   bold/italic markers that uses the hiding style instead of opacity.
+**Decoration issues (non-blocking):**
+1. **Expand-on-cursor scope too broad** — markers reveal when cursor is anywhere
+   in the paragraph, not just on the specific styled span. Should only expand
+   when cursor is on/inside the exact bold/italic/link/code range.
+2. **CriticMarkup not color-coded** — additions/deletions/etc. show as plain
+   text. Should be colored (green for additions, red+strikethrough for
+   deletions, yellow for highlights, etc.). This is Phase 2 work — parser
+   exists, decoration provider does not.
+3. **Table column widths still variable** — auto-format on save adds padding
+   but the editor uses a proportional font by default. Fixed-width columns
+   require either: (a) monospace font for tables, (b) decoration-based
+   character-width normalization, or (c) `editor.fontFamily` override scoped
+   to table regions. Needs investigation.
+4. **Blockquote decoration too plain** — just a `> ` prefix with no visual
+   distinction. Should investigate: left-border bar (via `borderLeft` in
+   DecorationRenderOptions), background tint, or italic styling for quoted
+   text. Other extensions use `before` pseudo-element for the border bar.
+5. **Light/dark mode toggle** — future feature. Extension should support a
+   theme-aware mode toggle or respect VS Code's color theme automatically.
+   Not a defect — add to Phase 5+ or a dedicated UX polish phase.
 
-2. **Link URLs visible when they shouldn't be**
-   `[text](url)` shows all syntax dimmed but readable. When cursor is away,
-   only the link text should be visible — `[`, `](`, the URL, and `)` should
-   all be hidden. Same hiding technique as #1. Requires a separate
-   `LinkHidingProvider` (or folding links into the syntax-hiding provider).
-
-3. **Tables not visually formatted**
-   Raw table markup shows as-is. Tables should render with padded columns
-   (fixed-width alignment). Two possible approaches:
-   a) Auto-format tables on save/type using `serializeTable()` (rewrites the
-      text to add padding) — **recommended**, simpler and produces real
-      whitespace the user can see even outside the extension
-   b) Decoration-based padding (visual only, text unchanged) — fragile
-
-4. **Heading font size — no differentiation**
-   VS Code `DecorationRenderOptions` has no `fontSize` property. Current
-   implementation uses only `fontWeight`. Headings all look the same size.
-   Workaround to investigate: CSS injection via the `textDecoration` property
-   (`textDecoration: 'none; font-size: 1.5em'`). This hack is used by
-   extensions like Better Comments and may work for font-size scaling.
-   Fallback: use color or underline to distinguish heading levels.
-
-5. **Inline code not visually decorated**
-   Backtick markers are dimmed but the code content has no visual treatment
-   (no background, no border). Expected: backticks hidden, code content gets
-   a subtle background color (e.g., `rgba(128,128,128,0.15)`) to visually
-   set it apart as a code span. Requires a new `InlineCodeContentProvider`
-   with `backgroundColor` in its collapsed style.
-
-6. **Code blocks lack decoration**
-   Fenced code blocks (` ``` `) are passed through with no visual treatment.
-   Expected: subtle background on the entire block, dimmed/hidden fence
-   markers. Lower priority since VS Code's built-in syntax highlighting
-   already handles code block content.
+**Editing behavior issues (non-blocking):**
+6. **List continuation on Enter** — pressing Enter at end of a bullet line
+   should auto-insert `- ` (or `* `) on the next line. Same for ordered
+   lists (`1. ` → `2. `). Empty continuation should remove the bullet.
+7. **Blockquote continuation on Enter** — pressing Enter inside a blockquote
+   should auto-insert `> ` on the next line. This is the same pattern as #6
+   — generalize as "style continuation on Enter" covering: bullets,
+   numbered lists, blockquotes, and potentially task lists (`- [ ] `).
+8. **Tab should indent bullets** — Tab on a bullet line should indent one
+   level (add leading spaces matching list indent), not insert literal
+   spaces. Shift+Tab should outdent.
+9. **Cmd+[ / Cmd+] for indent/outdent** — should increase/decrease indent
+   level of the current line(s). Currently mapped to next/previous change
+   (Phase 2) — needs keybinding reassignment. Use Cmd+Alt+[ / Cmd+Alt+]
+   for change navigation instead.
+10. **Cmd+Alt+M for CriticMarkup comment** — if text is selected, wrap it
+    with `{>> ... <<}`. This is a Phase 3 command (track changes recording)
+    but the keybinding should be reserved now.
 
 ### Other Known Issues
+- Heading font size CSS injection hack needs validation across VS Code versions.
+- Inline code `ThemeColor('textCodeBlock.background')` may not be visible in all themes.
 - Remaining lint warnings (16) are all in Phase 2+ stub files (unused params).
 
 ## Phased Roadmap
 Phase 0: Build & test skill — DONE
-Phase 1: Markdown Polish + Toolbar + Tables — DONE, but has decoration issues
-         (see Known Issues above — fix before moving to Phase 2)
-Phase 1.5: Decoration polish fixes — NEXT
+Phase 1: Markdown Polish + Toolbar + Tables — DONE
+Phase 1.5: Decoration polish (first pass) — DONE
+Phase 1.6: Editing behaviors + decoration refinements — NEXT
 Phase 2: CriticMarkup Display (read/render track changes)
 Phase 3: Track Changes Recording + Comments + Simple Claude dispatch
 Phase 4: Claude as Collaborator (context buffer, rewrite, file watcher)
 Phase 5: Agentic Workflows (@claude annotations, conflict resolution)
-Phase 6: Google Workspace Sync — gated on gws-cli availability
+Phase 6: UX Polish (light/dark toggle, theme-awareness, advanced table rendering)
+Phase 7: Google Workspace Sync — gated on gws-cli availability
          (no-regrets items like frontmatter URL pairing can land any time)
 
-### Phase 1.5 Scope — Decoration Polish (next up)
-Fix the decoration issues found during first F5 validation. The goal is that
-`test-fixtures/kitchen-sink.md` looks like a polished writing environment, not
-raw markdown with colored syntax.
+### Phase 1.5 — Decoration Polish, first pass (DONE)
+1. Bold/italic markers hidden (transparent+letterSpacing) via `BoldItalicMarkersProvider`
+2. Link syntax hidden, link text underlined via `LinkMarkersProvider` + `LinkTextProvider`
+3. Table auto-format on save via `onWillSaveTextDocument` in `table-formatter.ts`
+4. Heading font size via CSS injection (`textDecoration: 'none; font-size: Xem'`)
+5. Inline code: backticks hidden, content gets `backgroundColor`
+6. Code blocks: fence markers dimmed, content gets background
 
-1. **Hide bold/italic markers** — split `SyntaxDimmingProvider` into providers
-   that use `color: transparent` + `letterSpacing: '-1em'` (the heading marker
-   technique) instead of opacity. Bold/italic content itself stays unstyled.
-2. **Hide link syntax** — hide `[`, `](url)`, `)` when cursor is away. Only
-   the link text remains visible. Consider adding an underline or color to
-   the link text so it's still recognizable as a link.
-3. **Auto-format tables** — on save (via `onWillSaveTextDocument`), find all
-   tables and replace with `serializeTable()` output. Respects
-   `cozyMd.tables.autoAlignOnSave` setting (default true).
-4. **Heading font size** — try `textDecoration: 'none; font-size: 1.5em'` CSS
-   injection. Test h1=1.6em, h2=1.3em, h3=1.1em. If it doesn't work, fall
-   back to color differentiation (h1=accent color, h2=secondary, etc.).
-5. **Inline code background** — hide backtick markers, add
-   `backgroundColor` to code content. New `InlineCodeContentProvider`.
-6. **Code block background** — optional stretch goal. Dim/hide fence markers,
-   subtle background on block content.
+### Phase 1.6 Scope — Editing Behaviors + Decoration Refinements (next up)
+Editing behaviors that make markdown feel like a word processor:
+1. **Style continuation on Enter** — generalized system for auto-continuing
+   the current line's style on Enter:
+   - Bullet lists: `- ` / `* ` → next line gets same marker
+   - Ordered lists: `1. ` → next line gets `2. `, etc.
+   - Blockquotes: `> ` → next line gets `> `
+   - Task lists: `- [ ] ` → next line gets `- [ ] `
+   - Empty continuation (Enter on a line with only the marker) removes it
+2. **Tab indent/outdent for lists** — Tab on a bullet/numbered list line
+   indents one level, Shift+Tab outdents. Do NOT insert literal spaces.
+3. **Cmd+[ / Cmd+] for indent/outdent** — reassign from next/previous change
+   (move those to Cmd+Alt+[ / Cmd+Alt+]). Indent/outdent selected lines.
+4. **Narrow expand-on-cursor scope** — change the cursor-nearby check in
+   DecorationManager from line-based to range-based: only expand a decoration
+   when the cursor is within or directly adjacent to the decorated range,
+   not anywhere on the same line or paragraph.
+5. **Blockquote decoration** — investigate `borderLeft` CSS (via
+   `textDecoration` injection or `before` pseudo-element), background tint,
+   or italic text to give blockquotes a visual left-bar treatment.
+6. **Table toolbar** — when cursor is inside a table, show a floating UI
+   element (CodeLens or hover widget) with table controls:
+   - "Align Columns" — pad with whitespace for fixed-width columns
+   - "Compact" — remove padding whitespace to collapse back
+   - Add/remove row/column buttons (surface existing table menu commands)
+   This replaces the monospace font investigation — the user controls when
+   tables are padded vs compact, and the padding is real whitespace in the
+   file (not decoration-based).
+7. **Reserve Cmd+Alt+M keybinding** — for CriticMarkup comment insertion
+   (implementation in Phase 3, keybinding registered now as no-op or stub).
+8. **Tab/Shift+Tab cell navigation in tables** — when cursor is inside a
+   table, Tab moves to the next cell, Shift+Tab to the previous cell.
+   At end of last cell in a row, Tab moves to first cell of next row.
+   At end of last row, Tab creates a new row.
 
-### Phase 2 Scope
+### Phase 2 Scope — CriticMarkup Display
 Wire the CriticMarkup parser into a decoration provider for visual track changes:
 1. **CriticMarkup decoration provider** — register with DecorationManager,
    color additions (green), deletions (red/strikethrough), highlights (yellow),
    comments (gutter icon + hover tooltip), substitutions (old=red, new=green)
 2. **CodeLens provider** — Accept/Reject buttons above each CriticMarkup range
 3. **Accept/Reject commands** — resolve individual or all changes
-4. **Navigation** — next/previous change commands (Cmd+] / Cmd+[)
+4. **Navigation** — next/previous change commands (Cmd+Alt+[ / Cmd+Alt+])
 5. **Hover provider** — show comment text and change details on hover
