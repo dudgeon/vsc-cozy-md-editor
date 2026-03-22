@@ -86,7 +86,26 @@ Use Snapshot + Diff approach (see Decision Log in CLAUDE.md for rationale).
 ## Future Phases
 
 ### Phase 4 — UX Polish (was Phase 6)
-- Light/dark mode toggle button in editor title bar
+
+**Done:**
+- ✅ Light/dark/auto mode toggle button in editor title bar
+
+**Typography & fonts:**
+- Change the default typeface bundle (currently Inter 16px/1.6lh) — ship
+  2-3 curated bundles (e.g., "Cozy Default" = Inter, "Writer" = iA Writer
+  Quattro, "Serif" = Literata or Charter) with font family, size, and line
+  height tuned per bundle
+- User settings to define custom font bundles and select the active one
+  (`cozyMd.typography.activeBundle`, `cozyMd.typography.customBundles`)
+- Quick-switch command or toolbar button to cycle between font bundles
+
+**Documentation:**
+- README instructions for setting Cozy MD as the default editor for `.md`
+  files (via `workbench.editorAssociations` or similar)
+- README instructions for reverting to standard VS Code markdown defaults
+  (disable extension or reset `[markdown]` settings)
+
+**Remaining UX polish:**
 - Theme-awareness across all decorations
 - Nested ordered list numbering + config (research Typora a/i convention)
 - Table CodeLens styling improvements
