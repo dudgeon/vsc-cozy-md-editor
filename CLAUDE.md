@@ -248,6 +248,16 @@ The `skills/` directory contains Claude Code skills for this project:
 
 ### Known Issues (from seventh F5 validation, 2026-03-21)
 
+23. **Bold/italic with no selection inserts broken markers**
+    `Cmd+B` with no text selected inserts `****` at cursor, which breaks
+    surrounding text rendering (e.g., `und****erlying`). Google Docs behavior:
+    with no selection, Cmd+B selects the current word first, then wraps it.
+    If cursor is not inside a word (e.g., at a space), do nothing or enter
+    a "bold typing mode" (not feasible in VS Code without IME hooks).
+    Fix: detect empty selection, expand to word boundaries via
+    `document.getWordRangeAtPosition()`, then wrap. Same for italic/code.
+    File: `formatting.ts`. Slot: Phase 1.9 (quick fix).
+
 22. **Outdent list type inheritance — corner cases**
     Core behavior works (bullet under ordered → converts to numbered on
     Shift+Tab). Corner cases to fix later:

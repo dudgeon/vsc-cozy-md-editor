@@ -34,8 +34,8 @@ function toggleWrap(
     editor.edit(editBuilder => {
         for (const sel of editor.selections) {
             if (sel.isEmpty) {
-                // No selection — insert marker pair at cursor
-                editBuilder.insert(sel.start, marker + marker);
+                // No selection — do nothing (matches Google Docs behavior)
+                continue;
             } else {
                 const text = doc.getText(sel);
 
