@@ -109,6 +109,14 @@ Use Snapshot + Diff approach (see Decision Log in CLAUDE.md for rationale).
 - README instructions for reverting to standard VS Code markdown defaults
   (disable extension or reset `[markdown]` settings)
 
+**Core:**
+- Toggle all decorations off/on — a "raw markdown" mode that disables
+  all Cozy MD decorations (expand-on-cursor, heading styling, syntax
+  hiding, CriticMarkup display) and shows the file as plain markdown.
+  Toolbar button that says "Raw" / "Cozy" to toggle. Essential escape
+  hatch since we take over the default editor for .md files. Should
+  also be accessible via Command Palette and a keybinding.
+
 **Typography follow-ups:**
 - Toolbar button to cycle between typography bundles (revisit when usage
   patterns emerge — settings may be sufficient)
