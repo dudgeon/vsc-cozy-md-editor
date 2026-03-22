@@ -7,6 +7,8 @@ import { registerFrontmatterCommands } from './commands/frontmatter';
 import { registerTableFormatter } from './commands/table-formatter';
 import { registerEditingCommands } from './commands/editing';
 import { MarkdownCraftCodeLensProvider, registerTableCodeLensCommands } from './providers/codelens';
+import { CriticMarkupDecorationProvider } from './decorations/criticmarkup';
+import { registerTrackChangesCommands } from './commands/track-changes';
 
 let decorationManager: DecorationManager | undefined;
 
@@ -43,9 +45,14 @@ export function activate(context: vscode.ExtensionContext): void {
     context.subscriptions.push(codeLensProvider);
     registerTableCodeLensCommands(context);
 
-    // Phase 2: Register CriticMarkup decorations
-    // Phase 2: Register CodeLens provider (CriticMarkup accept/reject — TODO)
-    // Phase 3: Register track changes
+    // Phase 2: CriticMarkup decorations (Google Docs-style expand-on-cursor)
+    const criticMarkupProvider = new CriticMarkupDecorationProvider(decorationManager);
+    context.subscriptions.push(criticMarkupProvider);
+
+    // Phase 2: Register CriticMarkup decorations (done above)
+    // Phase 2: CodeLens provider now includes CriticMarkup accept/reject (in codelens.ts)
+    // Phase 3: Track changes commands (accept/reject, navigation)
+    registerTrackChangesCommands(context);
     // Phase 3: Register Claude dispatch commands
 }
 

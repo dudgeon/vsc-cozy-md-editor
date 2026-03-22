@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { parseTable, serializeTable, MarkdownTable, TableCell } from '../parsers/markdown-table';
+import { parseCriticMarkup, CriticMarkupRange } from '../parsers/criticmarkup';
 
 /**
  * CodeLens provider for Accept/Reject buttons on CriticMarkup,
@@ -198,6 +199,26 @@ function serializeCompact(table: MarkdownTable): string {
     return [headerLine, separatorLine, ...dataLines].join('\n');
 }
 
+// ── CriticMarkup Label Helpers ───────────────────────────────────────────
+
+/**
+ * Return human-readable Accept/Reject labels for a CriticMarkup range type.
+ */
+function getCriticLabels(range: CriticMarkupRange): { acceptTitle: string; rejectTitle: string } {
+    switch (range.type) {
+        case 'addition':
+            return { acceptTitle: '✓ Accept Addition', rejectTitle: '✗ Reject Addition' };
+        case 'deletion':
+            return { acceptTitle: '✓ Accept Deletion', rejectTitle: '✗ Reject Deletion' };
+        case 'substitution':
+            return { acceptTitle: '✓ Accept Substitution', rejectTitle: '✗ Reject Substitution' };
+        case 'comment':
+            return { acceptTitle: '✓ Resolve Comment', rejectTitle: '✗ Remove Comment' };
+        case 'highlight':
+            return { acceptTitle: '✓ Accept Highlight', rejectTitle: '✗ Remove Highlight' };
+    }
+}
+
 // ── CodeLens Provider ────────────────────────────────────────────────────
 
 export class MarkdownCraftCodeLensProvider implements vscode.CodeLensProvider {
@@ -229,70 +250,110 @@ export class MarkdownCraftCodeLensProvider implements vscode.CodeLensProvider {
             return [];
         }
 
-        // Only show table CodeLens for the table containing the cursor
+        const result: vscode.CodeLens[] = [];
+
+        // ── CriticMarkup CodeLens (cursor-scoped) ─────────────────────
         const editor = vscode.window.activeTextEditor;
-        if (!editor || editor.document !== document) {
-            return [];
+        const cursorOffset = editor && editor.document === document
+            ? document.offsetAt(editor.selection.active)
+            : undefined;
+
+        if (cursorOffset !== undefined) {
+            const fullText = document.getText();
+            const criticRanges = parseCriticMarkup(fullText);
+
+            // Find the CriticMarkup range that contains the cursor
+            const activeCritic = criticRanges.find(
+                r => cursorOffset >= r.start && cursorOffset <= r.end
+            );
+
+            if (activeCritic) {
+                const startPos = document.positionAt(activeCritic.start);
+                const codeLensRange = new vscode.Range(startPos.line, 0, startPos.line, 0);
+                const { acceptTitle, rejectTitle } = getCriticLabels(activeCritic);
+
+                result.push(
+                    new vscode.CodeLens(codeLensRange, { title: '[', command: '', tooltip: '' }),
+                    new vscode.CodeLens(codeLensRange, {
+                        title: acceptTitle,
+                        command: 'cozyMd.acceptChange',
+                        tooltip: acceptTitle,
+                        arguments: [activeCritic.start],
+                    }),
+                    new vscode.CodeLens(codeLensRange, {
+                        title: rejectTitle,
+                        command: 'cozyMd.rejectChange',
+                        tooltip: rejectTitle,
+                        arguments: [activeCritic.start],
+                    }),
+                    new vscode.CodeLens(codeLensRange, { title: ']', command: '', tooltip: '' }),
+                );
+            }
         }
-        const cursorLine = editor.selection.active.line;
 
-        const regions = findAllTableRegions(document);
+        // ── Table CodeLens (cursor-scoped) ───────────────────────────────
+        if (editor && editor.document === document) {
+            const cursorLine = editor.selection.active.line;
+            const regions = findAllTableRegions(document);
 
-        // Find the region that contains the cursor line
-        const activeRegion = regions.find(
-            r => cursorLine >= r.startLine && cursorLine <= r.endLine
-        );
-        if (!activeRegion) {
-            return [];
+            // Find the region that contains the cursor line
+            const activeRegion = regions.find(
+                r => cursorLine >= r.startLine && cursorLine <= r.endLine
+            );
+
+            if (activeRegion) {
+                // Extract text and parse to validate it's a real table
+                const lines: string[] = [];
+                for (let i = activeRegion.startLine; i <= activeRegion.endLine; i++) {
+                    lines.push(document.lineAt(i).text);
+                }
+                const text = lines.join('\n');
+                const table = parseTable(text, activeRegion.startLine);
+
+                if (table) {
+                    // Place the CodeLens on the header line of the table
+                    const codeLensLine = table.startLine;
+                    const range = new vscode.Range(codeLensLine, 0, codeLensLine, 0);
+
+                    result.push(
+                        new vscode.CodeLens(range, { title: '[', command: '', tooltip: '' }),
+                        new vscode.CodeLens(range, {
+                            title: '▦ Align',
+                            command: 'cozyMd.alignTableColumns',
+                            tooltip: 'Pad cells with whitespace for fixed-width visual columns',
+                        }),
+                        new vscode.CodeLens(range, {
+                            title: '▤ Compact',
+                            command: 'cozyMd.compactTable',
+                            tooltip: 'Remove padding whitespace (trim cells, minimal separators)',
+                        }),
+                        new vscode.CodeLens(range, {
+                            title: '＋ Row',
+                            command: 'cozyMd.codeLensAddRow',
+                            tooltip: 'Add a new row at the bottom of the table',
+                        }),
+                        new vscode.CodeLens(range, {
+                            title: '＋ Col',
+                            command: 'cozyMd.codeLensAddColumn',
+                            tooltip: 'Add a new column at the right of the table',
+                        }),
+                        new vscode.CodeLens(range, {
+                            title: '－ Row',
+                            command: 'cozyMd.codeLensDeleteRow',
+                            tooltip: 'Delete the current row (cannot delete header)',
+                        }),
+                        new vscode.CodeLens(range, {
+                            title: '－ Col',
+                            command: 'cozyMd.codeLensDeleteColumn',
+                            tooltip: 'Delete the current column (cannot delete last column)',
+                        }),
+                        new vscode.CodeLens(range, { title: ']', command: '', tooltip: '' }),
+                    );
+                }
+            }
         }
 
-        // Extract text and parse to validate it's a real table
-        const lines: string[] = [];
-        for (let i = activeRegion.startLine; i <= activeRegion.endLine; i++) {
-            lines.push(document.lineAt(i).text);
-        }
-        const text = lines.join('\n');
-        const table = parseTable(text, activeRegion.startLine);
-        if (!table) {
-            return [];
-        }
-
-        // Place the CodeLens on the header line of the table
-        const codeLensLine = table.startLine;
-        const range = new vscode.Range(codeLensLine, 0, codeLensLine, 0);
-
-        return [
-            new vscode.CodeLens(range, {
-                title: 'Align Columns',
-                command: 'cozyMd.alignTableColumns',
-                tooltip: 'Pad cells with whitespace for fixed-width visual columns',
-            }),
-            new vscode.CodeLens(range, {
-                title: 'Compact',
-                command: 'cozyMd.compactTable',
-                tooltip: 'Remove padding whitespace (trim cells, minimal separators)',
-            }),
-            new vscode.CodeLens(range, {
-                title: '+ Row',
-                command: 'cozyMd.codeLensAddRow',
-                tooltip: 'Add a new row at the bottom of the table',
-            }),
-            new vscode.CodeLens(range, {
-                title: '+ Column',
-                command: 'cozyMd.codeLensAddColumn',
-                tooltip: 'Add a new column at the right of the table',
-            }),
-            new vscode.CodeLens(range, {
-                title: 'Delete Row',
-                command: 'cozyMd.codeLensDeleteRow',
-                tooltip: 'Delete the current row (cannot delete header)',
-            }),
-            new vscode.CodeLens(range, {
-                title: 'Delete Column',
-                command: 'cozyMd.codeLensDeleteColumn',
-                tooltip: 'Delete the current column (cannot delete last column)',
-            }),
-        ];
+        return result;
     }
 }
 
