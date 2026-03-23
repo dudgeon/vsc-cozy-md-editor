@@ -92,15 +92,16 @@ Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/item
 | Inline code | Cmd+` | Ctrl+` |
 | Link | Cmd+K | Ctrl+K |
 | Cycle heading level | Cmd+Shift+H | Ctrl+Shift+H |
-| Insert frontmatter | Cmd+Alt+F | Ctrl+Alt+F |
-| Table menu | Cmd+Alt+T | Ctrl+Alt+T |
+| Insert frontmatter | Cmd+Option+F | Ctrl+Alt+F |
+| Table menu | Cmd+Option+T | Ctrl+Alt+T |
 | Indent lines | Cmd+] | Ctrl+] |
 | Outdent lines | Cmd+[ | Ctrl+[ |
 | Toggle track changes | Cmd+Shift+T | Ctrl+Shift+T |
-| Add comment | Cmd+Alt+M | Ctrl+Alt+M |
-| Accept change | Cmd+Alt+A | Ctrl+Alt+A |
-| Next change | Cmd+Alt+] | Ctrl+Alt+] |
-| Previous change | Cmd+Alt+[ | Ctrl+Alt+[ |
+| Add comment | Cmd+Option+M | Ctrl+Alt+M |
+| Accept change | Cmd+Option+A | Ctrl+Alt+A |
+| Reject change | Cmd+Option+R | Ctrl+Alt+R |
+| Next change | Cmd+Option+] | Ctrl+Alt+] |
+| Previous change | Cmd+Option+[ | Ctrl+Alt+[ |
 
 ## Feedback and feature requests
 

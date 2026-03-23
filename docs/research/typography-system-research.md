@@ -16,7 +16,7 @@
 | **Hierarchy model** | Mixed family (serif headings, sans body) | Single family, weight-driven |
 | **Best for** | Long-form writing, drafts, creative work | Notes, research, structured docs, PRDs |
 
-Both themes are the **user's choice at the editor level** (not per-document). The editor should default to **Clean** on first launch. Users switch between them via a settings toggle or command palette.
+Both themes are the **user's choice at the editor level** (not per-document). The editor defaults to **Reader** (was "Cozy", renamed post-research) on first launch. Users switch between them via a settings toggle or command palette.
 
 ---
 

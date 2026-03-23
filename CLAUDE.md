@@ -206,7 +206,7 @@ These are things we tried that DON'T WORK in the VS Code extension API:
 ## Testing
 - `npm test` runs parser unit tests via mocha (TDD interface, `suite`/`test`)
   - Scoped to `src/test/suite/parsers/**/*.test.ts` (no vscode dependency)
-  - Currently: 16 passing, 0 failing
+  - Run `npm test` for current pass/fail count
 - `npm run test:integration` runs VS Code integration tests via Extension
   Development Host (`src/test/suite/extension.test.ts`)
 - Unit tests target: CriticMarkup parser, table parser/serializer,

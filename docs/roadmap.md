@@ -38,52 +38,21 @@
 - **Commands**: accept/reject (single + all), next/previous change navigation
 - **Accept/reject by offset**: CodeLens passes exact range offset as argument
 
----
-
-## Up Next — Phase 3: Track Changes Recording + Comments + Claude Dispatch
-
-### 3.1 Track Changes Recording
-Use Snapshot + Diff approach (see Decision Log in CLAUDE.md for rationale).
-
-**UX flow:**
-1. Doc opens → track changes OFF → edits are direct, no detection
-2. User toggles on (Cmd+Shift+T) → toolbar shows **Done** and **Cancel**
-3. Extension snapshots the document; user edits freely (undo works normally)
-4. **Done** → `diffWords(snapshot, current)` generates CriticMarkup, replaces
-   document in single `editor.edit()`. Single Cmd+Z undoes the generation.
-5. **Cancel** → tracking ends, no CriticMarkup generated, edits stay as-is
-
-### 3.2 Comment Command
-- Consolidate `addComment` (Cmd+Alt+C) and `addCriticComment` (Cmd+Alt+M)
-  into single `cozyMd.addComment` on **Cmd+Alt+M**. Remove Cmd+Alt+C binding.
-- With selection: wraps with `{>> <<}`
-- CodeLens "Add Comment" button on tracked changes: inserts `{>> <<}` after
-  the CriticMarkup range and positions cursor between delimiters
-
-### 3.3 Simple Claude Dispatch
-- `askClaudeAboutFile` — sends file path to Claude Code terminal
-- `askClaudeAboutSelection` — sends selection + prompt
-- `sendFileToClaudeContext` — sends `/add {filePath}`
-- Terminal strategy: find existing terminal named per `cozyMd.claude.terminalName`
-  (default: "Claude"), fall back to most recent, create new if none exists
-
-### 3.4 Quick Wins
-- `togglePreview` — one-line wrapper around `markdown.showPreviewToSide`
-- Register `toggleTrackChanges` toggle with visual indicator
-
-### 3.5 Cleanup
-- Remove Phase 4 commands from package.json (addToContextBuffer,
-  dispatchContextBuffer, clearContextBuffer)
-- Remove dead code: `buildMarkerReplacement()`, `findChangeAtCursor()`
-- Remove unused deps: `markdown-it`, `picomatch`, `vscode-uri`
-- Remove `addComment` command/keybinding (Cmd+Alt+C), consolidate to Cmd+Alt+M
-
-### 3.6 README
-- Update README.md as features ship (track changes recording, Claude dispatch)
+### Phase 3 — Track Changes Recording + Comments + Claude Dispatch
+- **Track changes recording**: Snapshot+Diff approach — toggle on (Cmd+Shift+T),
+  toolbar shows "Save Tracked Changes" / "Cancel Track Changes", edits diffed
+  on commit via `diffWords()`, single Cmd+Z undoes the generation
+- **Comment command**: Cmd+Alt+M wraps selection with `{>> <<}`, positions cursor.
+  CodeLens "Add Comment" button on tracked changes
+- **Claude dispatch**: askClaudeAboutFile, askClaudeAboutSelection,
+  sendFileToClaudeContext — terminal strategy with configurable name
+- **Quick wins**: togglePreview, toggleTrackChanges with toolbar buttons
+- **Cleanup**: removed dead code, unused deps (markdown-it, picomatch, vscode-uri),
+  Phase 4 commands, consolidated addComment to Cmd+Alt+M
 
 ---
 
-## Future Phases
+## In Progress — Phase 4: UX Polish
 
 ### Phase 4 — UX Polish (was Phase 6)
 
@@ -147,8 +116,8 @@ rewrite; concurrent editing is complex and needs research before scoping.
   unclear what user problem this solves.
 - ~~Rewrite selection with Claude~~ — select text, Claude rewrites, diff
   view. Deferred: same reason.
-- **Safe concurrent editing** — research spike in progress. See
-  `docs/research-concurrent-editing.md` when available. Key questions:
+- **Safe concurrent editing** — research complete. See
+  [research-concurrent-editing.md](research-concurrent-editing.md). Key questions:
   what happens when Claude edits a file the user has open? What VS Code
   APIs are available? Is prompting Claude to use CriticMarkup sufficient?
 
