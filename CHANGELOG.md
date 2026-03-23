@@ -2,6 +2,27 @@
 
 All notable changes to the Cozy MD Editor extension will be documented in this file.
 
+## [0.3.0] - 2026-03-22
+
+### Added
+
+- Typography bundle system with two built-in presets: "Reader" (Newsreader headings + Plus Jakarta Sans body) and "Clean" (Inter). Custom user-defined bundles supported with full control over fonts, sizes, weights, and heading styles.
+- MD/Cozy decoration toggle — toolbar button to switch between decorated (Cozy) and raw markdown (MD) editing modes
+- Monospace font for table regions so pipe-delimited columns visually align (auto-switches from body font)
+- Word occurrence highlighting disabled for markdown files (less visual noise)
+
+### Changed
+
+- Table CodeLens controls reordered: +Row, -Row, +Col, -Col (grouped by entity)
+- Typography bundle "cozy" renamed to "reader" (settings auto-migrated)
+- Preview button shortened to "Preview" (fixes toolbar text wrapping)
+- Repo root tidied: assets, skills, and specs moved to docs/ and .claude/
+
+### Fixed
+
+- Settings migration for users who had the old "cozy" typography bundle name
+- Preview button keybinding hint causing toolbar line wrap (issue #4)
+
 ## [0.2.0] - 2026-03-22
 
 ### Added

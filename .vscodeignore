@@ -11,7 +11,5 @@ CLAUDE.md
 package-lock.json
 .env
 .claude/**
-docs/*.md
-docs/test-fixtures/**
-docs/cozy-md-editor-fleece.png
-docs/research-concurrent-editing.md
+docs/**
+!docs/icon.png
