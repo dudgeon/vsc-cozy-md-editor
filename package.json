@@ -2,7 +2,7 @@
   "name": "cozy-md-editor",
   "displayName": "Cozy Markdown Editor",
   "description": "An approachable VS Code extension for markdown editing with CriticMarkup track changes and Claude Code integration.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "dudgeon",
   "license": "MIT",
   "icon": "docs/icon.png",
@@ -338,53 +338,115 @@
               "headingFont": "'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Segoe UI', Arial, sans-serif",
               "bodySize": 16,
               "bodyLineHeight": 1.7,
-              "h1": { "size": "1.875em", "weight": "700", "letterSpacing": "-0.02em" },
-              "h2": { "size": "1.375em", "weight": "600", "letterSpacing": "-0.01em" },
-              "h3": { "size": "1em", "weight": "600" }
+              "h1": {
+                "size": "1.875em",
+                "weight": "700",
+                "letterSpacing": "-0.02em"
+              },
+              "h2": {
+                "size": "1.375em",
+                "weight": "600",
+                "letterSpacing": "-0.01em"
+              },
+              "h3": {
+                "size": "1em",
+                "weight": "600"
+              }
             },
             "reader": {
               "bodyFont": "'Plus Jakarta Sans', 'Avenir Next', -apple-system, 'Helvetica Neue', sans-serif",
               "headingFont": "'Newsreader', 'New York', Charter, Georgia, serif",
               "bodySize": 16,
               "bodyLineHeight": 1.8,
-              "h1": { "size": "1.875em", "weight": "700", "letterSpacing": "-0.01em" },
-              "h2": { "size": "1.375em", "weight": "600" },
-              "h3": { "size": "1em", "weight": "500", "style": "italic" }
+              "h1": {
+                "size": "1.875em",
+                "weight": "700",
+                "letterSpacing": "-0.01em"
+              },
+              "h2": {
+                "size": "1.375em",
+                "weight": "600"
+              },
+              "h3": {
+                "size": "1em",
+                "weight": "500",
+                "style": "italic"
+              }
             }
           },
           "markdownDescription": "Define your own typography bundles. Each bundle is a named set of fonts and sizes.\n\n**Example** — add this to your settings.json:\n```json\n\"cozyMd.typography.customBundles\": {\n  \"monospace\": {\n    \"bodyFont\": \"'JetBrains Mono', monospace\",\n    \"headingFont\": \"'JetBrains Mono', monospace\",\n    \"bodySize\": 14,\n    \"bodyLineHeight\": 1.5\n  }\n}\n```\nThen set `#cozyMd.typography.activeBundle#` to `monospace`.\n\nAny property you leave out falls back to the 'clean' bundle defaults. You only need to specify what you want to change.",
           "additionalProperties": {
             "type": "object",
             "properties": {
-              "bodyFont": { "type": "string", "description": "CSS font-family for body text (comma-separated font stack)" },
-              "headingFont": { "type": "string", "description": "CSS font-family for headings" },
-              "bodySize": { "type": "number", "description": "Body font size in pixels" },
-              "bodyLineHeight": { "type": "number", "description": "Body line height (unitless ratio)" },
+              "bodyFont": {
+                "type": "string",
+                "description": "CSS font-family for body text (comma-separated font stack)"
+              },
+              "headingFont": {
+                "type": "string",
+                "description": "CSS font-family for headings"
+              },
+              "bodySize": {
+                "type": "number",
+                "description": "Body font size in pixels"
+              },
+              "bodyLineHeight": {
+                "type": "number",
+                "description": "Body line height (unitless ratio)"
+              },
               "h1": {
                 "type": "object",
                 "properties": {
-                  "size": { "type": "string", "description": "Font size (e.g., '1.875em')" },
-                  "weight": { "type": "string", "description": "Font weight (e.g., '700')" },
-                  "letterSpacing": { "type": "string", "description": "Letter spacing (e.g., '-0.02em')" },
-                  "style": { "type": "string", "description": "Font style (e.g., 'italic')" }
+                  "size": {
+                    "type": "string",
+                    "description": "Font size (e.g., '1.875em')"
+                  },
+                  "weight": {
+                    "type": "string",
+                    "description": "Font weight (e.g., '700')"
+                  },
+                  "letterSpacing": {
+                    "type": "string",
+                    "description": "Letter spacing (e.g., '-0.02em')"
+                  },
+                  "style": {
+                    "type": "string",
+                    "description": "Font style (e.g., 'italic')"
+                  }
                 }
               },
               "h2": {
                 "type": "object",
                 "properties": {
-                  "size": { "type": "string" },
-                  "weight": { "type": "string" },
-                  "letterSpacing": { "type": "string" },
-                  "style": { "type": "string" }
+                  "size": {
+                    "type": "string"
+                  },
+                  "weight": {
+                    "type": "string"
+                  },
+                  "letterSpacing": {
+                    "type": "string"
+                  },
+                  "style": {
+                    "type": "string"
+                  }
                 }
               },
               "h3": {
                 "type": "object",
                 "properties": {
-                  "size": { "type": "string" },
-                  "weight": { "type": "string" },
-                  "letterSpacing": { "type": "string" },
-                  "style": { "type": "string" }
+                  "size": {
+                    "type": "string"
+                  },
+                  "weight": {
+                    "type": "string"
+                  },
+                  "letterSpacing": {
+                    "type": "string"
+                  },
+                  "style": {
+                    "type": "string"
+                  }
                 }
               }
             }
