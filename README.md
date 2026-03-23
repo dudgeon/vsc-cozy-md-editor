@@ -103,6 +103,12 @@ Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/item
 | Next change | Cmd+Option+] | Ctrl+Alt+] |
 | Previous change | Cmd+Option+[ | Ctrl+Alt+[ |
 
+## Switching between Cozy and standard editing
+
+**Raw markdown mode:** Click the **Cozy** button in the toolbar to switch to **MD** mode — all decorations are disabled and you see the raw markdown. Click **MD** to switch back.
+
+**Reverting to VS Code defaults:** If you want to go back to VS Code's standard markdown editing (no Cozy MD decorations or font changes), disable the extension in the Extensions panel (`Cmd+Shift+X`), find "Cozy Markdown Editor", and click **Disable**. Your editor settings will revert to their previous values.
+
 ## Feedback and feature requests
 
 This is under active development. If something doesn't work, feels weird, or you wish it did something it doesn't — open an issue:

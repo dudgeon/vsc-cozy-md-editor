@@ -62,6 +62,10 @@
   bundles with full control over fonts/sizes/weights/heading styles)
 - ✅ Frontmatter renders in monospace font
 - ✅ Word occurrence highlighting disabled for markdown (issue #5)
+- ✅ MD/Cozy decoration toggle (raw markdown escape hatch)
+- ✅ Monospace font for table regions
+- ✅ Rich text paste (HTML → markdown) with Google Docs preprocessing
+- ✅ Preview button text wrapping fix (issue #4)
 
 **Typography & fonts:**
 - Change the default typeface bundle (currently Inter 16px/1.6lh) — ship
@@ -95,10 +99,12 @@
 - Nested ordered list numbering + config (research Typora a/i convention)
 - Table CodeLens styling improvements
 - Replace CodeLens with inline styled badges (`after` pseudo-element)
-- Rich text → markdown paste (clipboard HTML → clean markdown) —
-  [spec](specs/rich-text-paste.md)
+- ✅ Rich text → markdown paste — [spec](specs/rich-text-paste.md).
+  Shipped with known issues: #6 (checkbox artifacts), #7 (nested lists),
+  #9 (copy strips code fences). See GitHub Issues.
+- ✅ Table monospace font for column alignment
 - Google Docs keyboard convention audit (Cmd+Shift+7/8 for lists, etc.)
-- Table column width improvements (monospace scoping investigation)
+- Convert table to text button (#8 — needs UX design)
 - Cmd+K conflict documentation (intercepts VS Code chord prefix)
 
 ### Phase 5 — Google Workspace Sync (was Phase 7)
@@ -131,10 +137,15 @@ rewrite; concurrent editing is complex and needs research before scoping.
 
 ## Open Issues
 
-Track in [GitHub Issues](https://github.com/dudgeon/vsc-cozy-md-editor/issues).
-Items below are pending migration to GitHub Issues:
+Track all issues in [GitHub Issues](https://github.com/dudgeon/vsc-cozy-md-editor/issues).
 
-1. Outdent list type inheritance — corner cases (renumber subsequent items,
-   deeply nested mixed lists, task list outdenting)
-2. Heading font size via CSS injection — works but fragile hack
-3. letterSpacing hiding on soft-wrapped lines — safe for short markers only
+Active issues:
+- **#6** Paste: checkbox artifacts from Google Docs
+- **#7** Paste: nested lists lose structure, extra line breaks
+- **#8** Table controls: Convert to Text button (needs UX design)
+- **#9** Copy from editor strips code fence markers (high priority)
+
+Known limitations (not filed as issues):
+- Heading font size via CSS injection — works but fragile hack
+- letterSpacing hiding on soft-wrapped lines — safe for short markers only
+- Outdent list type inheritance corner cases
