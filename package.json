@@ -48,13 +48,16 @@
     "vscode:prepublish": "npm run build"
   },
   "dependencies": {
+    "@truto/turndown-plugin-gfm": "^1.0.2",
     "diff": "^5.1.0",
+    "turndown": "^7.2.2",
     "yaml": "^2.3.4"
   },
   "devDependencies": {
     "@types/diff": "^5.0.9",
     "@types/mocha": "^10.0.6",
     "@types/node": "^20.11.0",
+    "@types/turndown": "^5.0.6",
     "@types/vscode": "^1.85.0",
     "@typescript-eslint/eslint-plugin": "^6.19.0",
     "@typescript-eslint/parser": "^6.19.0",
@@ -530,6 +533,11 @@
           "type": "boolean",
           "default": true,
           "description": "Watch for external file changes made by Claude."
+        },
+        "cozyMd.paste.convertHtmlToMarkdown": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Convert rich text (HTML) to clean markdown when pasting. Works with Google Docs, Gmail, web pages, and other HTML sources."
         },
         "cozyMd.google.showSyncStatus": {
           "type": "boolean",

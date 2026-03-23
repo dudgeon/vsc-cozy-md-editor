@@ -10,6 +10,7 @@ import { MarkdownCraftCodeLensProvider, registerTableCodeLensCommands } from './
 import { CriticMarkupDecorationProvider } from './decorations/criticmarkup';
 import { registerTrackChangesCommands } from './commands/track-changes';
 import { registerClaudeCommands } from './commands/claude';
+import { registerPasteProvider } from './paste/provider';
 import { applyTypographyBundle } from './typography';
 
 let decorationManager: DecorationManager | undefined;
@@ -87,6 +88,9 @@ export function activate(context: vscode.ExtensionContext): void {
 
     // Phase 3: Register Claude dispatch commands
     registerClaudeCommands(context);
+
+    // Phase 4: Rich text paste → markdown conversion
+    registerPasteProvider(context);
 
     // Phase 4: Light/dark mode toggle (cycles Light → Dark → Auto)
     // Uses setContext to swap which button label is visible in the toolbar.
