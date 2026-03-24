@@ -10,7 +10,7 @@ import { getActiveBundle } from '../typography';
 const FRONTMATTER_DIM_OPACITY = '0.4';
 
 /** Opacity value used for dimmed fence markers in code blocks. */
-const CODE_BLOCK_FENCE_DIM_OPACITY = '0.4';
+const CODE_BLOCK_FENCE_DIM_OPACITY = '0.6';
 
 // ---------------------------------------------------------------------------
 // Shared hiding style
